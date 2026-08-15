@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock Workspace - Dependency-Aware Task Management</title>
+  <meta name="description" content="FlowLock Workspace - Dependency-Aware Kanban Board with Algorithmic Lock Propagation and Graph Cycle Detection.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="brand-name">
+        <span>🔒 FlowLock</span>
+        <span class="brand-badge">PRO v1.0</span>
+      </div>
+      <span class="workspace-title">Dependency-Aware Workspace</span>
+    </div>
+
+    <div class="header-right">
+      <button id="themeToggleBtn" class="btn-icon" title="Toggle Light/Dark Theme">🌙</button>
+      
+      <div class="user-profile">
+        <div class="user-avatar">D</div>
+        <span id="userName" class="user-name">Diksha</span>
+      </div>
+
+      <button id="logoutBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- Quick Actions Banner -->
+    <section class="demo-banner">
+      <div class="demo-info">
+        <span style="font-size: 20px;">⚡</span>
+        <div>
+          <h3 class="demo-title">Dependency Engine: ACTIVE</h3>
+          <p class="demo-subtitle">Quick Actions & Dependency Simulation Suite</p>
+        </div>
+      </div>
+
+      <div class="demo-actions">
+        <button id="demoResetBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">🔄 Reset Workspace</button>
+        <button id="demoCompleteDepBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-done);">✓ Complete Prerequisite</button>
+        <button id="demoTryLockedBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-locked);">🔒 Simulate Blocked Move</button>
+        <button id="demoShowChainBtn" class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;">🔍 Inspect Graph</button>
+      </div>
+    </section>
+
+    <!-- Metrics Cards Grid -->
+    <section id="metricsGrid" class="metrics-grid">
+      <!-- Dynamic rendering via ui.js -->
+    </section>
+
+    <!-- Toolbar Controls -->
+    <section class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search tasks, descriptions, assignees...">
+        </div>
+
+        <select id="filterSelect" class="filter-select">
+          <option value="all">Filter: All Tasks</option>
+          <option value="Backlog">Status: Backlog</option>
+          <option value="Todo">Status: Todo</option>
+          <option value="In Progress">Status: In Progress</option>
+          <option value="Done">Status: Done</option>
+          <option value="locked">State: 🔒 Locked Only</option>
+          <option value="High">Priority: High</option>
+          <option value="Medium">Priority: Medium</option>
+          <option value="Low">Priority: Low</option>
+        </select>
+
+        <select id="sortSelect" class="filter-select">
+          <option value="priority">Sort by: Priority</option>
+          <option value="dueDate">Sort by: Due Date</option>
+          <option value="title">Sort by: Title</option>
+          <option value="dependencies">Sort by: Dependency Count</option>
+        </select>
+      </div>
+
+      <div class="toolbar-right">
+        <button id="exportJsonBtn" class="btn btn-secondary">📥 Export Board</button>
+        <button id="importJsonBtn" class="btn btn-secondary">📤 Import Board</button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+        <button id="addTaskBtn" class="btn btn-primary">➕ New Task</button>
+      </div>
+    </section>
+
+    <!-- 4-Column Kanban Board -->
+    <section id="kanbanBoard" class="board-container">
+      
+      <!-- BACKLOG Column -->
+      <div class="kanban-column">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="column-dot backlog"></span>
+            <span class="column-title">Backlog</span>
+          </div>
+          <span id="count-Backlog" class="column-count">0</span>
+        </div>
+        <div id="list-Backlog" class="task-list" data-status="Backlog"></div>
+      </div>
+
+      <!-- TODO Column -->
+      <div class="kanban-column">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="column-dot todo"></span>
+            <span class="column-title">Todo</span>
+          </div>
+          <span id="count-Todo" class="column-count">0</span>
+        </div>
+        <div id="list-Todo" class="task-list" data-status="Todo"></div>
+      </div>
+
+      <!-- IN PROGRESS Column -->
+      <div class="kanban-column">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="column-dot in-progress"></span>
+            <span class="column-title">In Progress</span>
+          </div>
+          <span id="count-InProgress" class="column-count">0</span>
+        </div>
+        <div id="list-In Progress" class="task-list" data-status="In Progress"></div>
+      </div>
+
+      <!-- DONE Column -->
+      <div class="kanban-column">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="column-dot done"></span>
+            <span class="column-title">Done</span>
+          </div>
+          <span id="count-Done" class="column-count">0</span>
+        </div>
+        <div id="list-Done" class="task-list" data-status="Done"></div>
+      </div>
+
+    </section>
+
+    <!-- Activity Log Section -->
+    <section class="activity-panel">
+      <div class="activity-header">
+        <span>📜 Workspace Activity</span>
+        <span style="font-size: 11px; color: var(--text-dim);">Real-time events & lock propagation</span>
+      </div>
+      <div id="activityList" class="activity-list"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    FlowLock — Dependencies decide what moves next. Designed for software engineering teams.
+  </footer>
+
+  <!-- TASK ADD/EDIT MODAL -->
+  <div id="taskModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="formTitle" class="modal-title">Create New Task</h3>
+        <button class="btn-icon btn-close-modal">✕</button>
+      </div>
+
+      <form id="taskForm">
+        <input type="hidden" id="taskIdInput" value="">
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="taskTitle">Task Title *</label>
+            <input type="text" id="taskTitle" class="form-input" placeholder="e.g., Build Authentication API" required>
+            <div id="error-title" class="form-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskDescription">Description *</label>
+            <textarea id="taskDescription" class="form-textarea" placeholder="Detailed technical scope of the task..." required></textarea>
+            <div id="error-description" class="form-error"></div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="taskPriority">Priority</label>
+              <select id="taskPriority" class="form-select">
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="taskAssignee">Assignee</label>
+              <input type="text" id="taskAssignee" class="form-input" value="Diksha">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label class="form-label" for="taskDueDate">Due Date</label>
+              <input type="date" id="taskDueDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="taskStatus">Initial Status</label>
+              <select id="taskStatus" class="form-select">
+                <option value="Backlog">Backlog</option>
+                <option value="Todo" selected>Todo</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prerequisite Dependencies (Depends On)</label>
+            <div id="dependencyCheckboxes" class="dependency-select-box">
+              <!-- Dynamically populated checkboxes -->
+            </div>
+            <div id="error-dependsOn" class="form-error"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DEPENDENCY INSPECTOR MODAL -->
+  <div id="inspectorModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="inspectorModalTitle" class="modal-title">Dependency Inspector</h3>
+        <button class="btn-icon btn-close-modal">✕</button>
+      </div>
+
+      <div id="inspectorModalBody" class="modal-body">
+        <!-- Dynamically rendered visual dependency graph -->
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div id="deleteModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--status-locked);">Confirm Task Deletion</h3>
+        <button class="btn-icon btn-close-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p id="deleteConfirmMessage" style="font-size: 13px; color: var(--text-main); line-height: 1.5;"></p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Delete Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Main Bundle Module -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
