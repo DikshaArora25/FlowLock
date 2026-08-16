@@ -1,15 +1,22 @@
 /**
- * FlowLock Main Application Entry Point & Controller (Lectures 21-24: Events, Drag & Drop, ES6)
+ * FlowLock — Main Application Controller
+ * ES6 Modules · HTML5 Drag & Drop · Event Delegation · State Management
  */
 
 import { checkAuthGuard, logoutUser } from './auth.js';
 import { taskManager } from './taskManager.js';
-import { renderMetrics, renderKanbanBoard, renderDependencyInspector, populateTaskForm, renderActivityLog } from './ui.js';
+import {
+  renderMetrics,
+  renderKanbanBoard,
+  renderDependencyInspector,
+  populateTaskForm,
+  renderActivityLog
+} from './ui.js';
 import { validateTaskForm, renderFormErrors } from './validation.js';
 import { showToast, debounce } from './utils.js';
 import { savePreferences, loadPreferences, exportBoardAsJSON, parseAndValidateImportedJSON } from './storage.js';
 
-// Global application state for toolbar filters
+// ─── Global App State ────────────────────────────────────────────────────────
 const appState = {
   searchQuery: '',
   filterStatus: 'all',
@@ -18,25 +25,27 @@ const appState = {
   taskToDeleteId: null
 };
 
-// Initialize Application
+// ─── Boot ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Auth Route Guard
+  // 1. Auth guard — redirects to index.html if not logged in
   const user = checkAuthGuard('dashboard');
   if (user) {
-    const userNameEl = document.getElementById('userName');
-    if (userNameEl) userNameEl.textContent = user.name || 'Diksha';
+    const el = document.getElementById('userName');
+    if (el) el.textContent = user.name || 'Diksha';
   }
 
-  // 2. Load Theme Preference
+  // 2. Load saved theme preference
   const prefs = loadPreferences();
   if (prefs.theme) {
     document.documentElement.setAttribute('data-theme', prefs.theme);
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) themeBtn.textContent = prefs.theme === 'dark' ? '🌙' : '☀️';
   }
 
-  // 3. Render Initial State
+  // 3. Render initial state
   refreshAppUI();
 
-  // 4. Attach Event Listeners
+  // 4. Attach all event listeners
   initThemeToggle();
   initToolbarListeners();
   initKanbanDragAndDrop();
@@ -45,12 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initJsonImportExport();
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logoutUser);
-  }
+  if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 });
 
-// Refresh Complete App View
+// ─── Full UI Refresh ──────────────────────────────────────────────────────────
 export const refreshAppUI = () => {
   const allTasks = taskManager.getAllTasks();
   const filteredTasks = taskManager.getFilteredTasks({
@@ -59,29 +66,29 @@ export const refreshAppUI = () => {
     sortBy: appState.sortBy
   });
   const metrics = taskManager.getMetrics();
-  const activities = taskManager.getRecentActivities();
+  const activities = taskManager.getRecentActivities(20);
 
   renderMetrics(metrics);
   renderKanbanBoard(filteredTasks, allTasks);
   renderActivityLog(activities);
 };
 
-// Theme Toggle
+// ─── Theme Toggle ─────────────────────────────────────────────────────────────
 const initThemeToggle = () => {
-  const themeBtn = document.getElementById('themeToggleBtn');
-  if (!themeBtn) return;
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
 
-  themeBtn.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    savePreferences({ theme: newTheme });
-    themeBtn.textContent = newTheme === 'dark' ? '🌙' : '☀️';
-    showToast(`Switched to ${newTheme} theme`, 'info');
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    savePreferences({ theme: next });
+    btn.textContent = next === 'dark' ? '🌙' : '☀️';
+    showToast(`Switched to ${next} mode`, 'info');
   });
 };
 
-// Toolbar Search, Filtering, and Sorting
+// ─── Toolbar: Search, Filter, Sort ───────────────────────────────────────────
 const initToolbarListeners = () => {
   const searchInput = document.getElementById('searchInput');
   const filterSelect = document.getElementById('filterSelect');
@@ -109,16 +116,15 @@ const initToolbarListeners = () => {
   }
 };
 
-// Native HTML5 Drag and Drop Kanban Controller
+// ─── Kanban Drag & Drop ───────────────────────────────────────────────────────
 const initKanbanDragAndDrop = () => {
   const board = document.getElementById('kanbanBoard');
   if (!board) return;
 
-  // Delegate dragstart & dragend on task cards
+  // Drag start / end delegated on board
   board.addEventListener('dragstart', (e) => {
     const card = e.target.closest('.task-card');
     if (!card) return;
-
     appState.draggedTaskId = card.dataset.taskId;
     card.classList.add('dragging');
     e.dataTransfer.setData('text/plain', card.dataset.taskId);
@@ -128,14 +134,12 @@ const initKanbanDragAndDrop = () => {
   board.addEventListener('dragend', (e) => {
     const card = e.target.closest('.task-card');
     if (card) card.classList.remove('dragging');
-
-    document.querySelectorAll('.task-list').forEach(list => list.classList.remove('drag-over'));
+    document.querySelectorAll('.task-list').forEach(l => l.classList.remove('drag-over'));
     appState.draggedTaskId = null;
   });
 
-  // Attach dragover and drop handlers on column lists
-  const columnLists = document.querySelectorAll('.task-list');
-  columnLists.forEach(list => {
+  // Column drop zones
+  document.querySelectorAll('.task-list').forEach(list => {
     list.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
@@ -152,37 +156,39 @@ const initKanbanDragAndDrop = () => {
 
       const taskId = e.dataTransfer.getData('text/plain') || appState.draggedTaskId;
       const targetStatus = list.dataset.status;
-
       if (!taskId || !targetStatus) return;
 
-      // Attempt to move task
-      const result = taskManager.moveTaskStatus(taskId, targetStatus);
-
-      if (!result.success) {
-        // Anti-Cheat Block Triggered!
-        const cardEl = document.getElementById(`card-${taskId}`);
-        if (cardEl) {
-          cardEl.classList.add('shake');
-          setTimeout(() => cardEl.classList.remove('shake'), 500);
-        }
-
-        showToast(`🔒 ${result.message}`, 'error', 5000);
-
-        // Open Inspector to explain why task is locked
-        const task = taskManager.getTaskById(taskId);
-        if (task && task.locked) {
-          renderDependencyInspector(task, taskManager.getAllTasks());
-          openModal('inspectorModal');
-        }
-      } else {
-        showToast(`Moved "${result.task.title}" to ${targetStatus}`, 'success');
-        refreshAppUI();
-      }
+      handleTaskMove(taskId, targetStatus);
     });
   });
 };
 
-// Modal Open / Close Helpers
+// Shared task-move handler used by drag-drop AND demo buttons
+const handleTaskMove = (taskId, targetStatus) => {
+  const result = taskManager.moveTaskStatus(taskId, targetStatus);
+
+  if (!result.success) {
+    // Anti-cheat: shake animation + error toast + auto-open inspector
+    const cardEl = document.getElementById(`card-${taskId}`);
+    if (cardEl) {
+      cardEl.classList.add('shake');
+      setTimeout(() => cardEl.classList.remove('shake'), 600);
+    }
+    showToast(`🔒 ${result.message}`, 'error', 5000);
+
+    const task = taskManager.getTaskById(taskId);
+    if (task && task.locked) {
+      renderDependencyInspector(task, taskManager.getAllTasks());
+      openModal('inspectorModal');
+    }
+  } else {
+    showToast(`✓ "${result.task.title}" → ${targetStatus}`, 'success');
+    refreshAppUI();
+  }
+  return result;
+};
+
+// ─── Modal Helpers ────────────────────────────────────────────────────────────
 export const openModal = (modalId) => {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.add('active');
@@ -193,18 +199,16 @@ export const closeModal = (modalId) => {
   if (modal) modal.classList.remove('active');
 };
 
-// Modal Forms & Dynamic Action Listeners
+// ─── Modal Event Listeners ────────────────────────────────────────────────────
 const initModalListeners = () => {
-  // Modal Backdrop Click to Close
+  // Backdrop click to close
   document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
     backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) {
-        backdrop.classList.remove('active');
-      }
+      if (e.target === backdrop) backdrop.classList.remove('active');
     });
   });
 
-  // Modal Close Buttons
+  // Close buttons
   document.querySelectorAll('.btn-close-modal').forEach(btn => {
     btn.addEventListener('click', () => {
       const modal = btn.closest('.modal-backdrop');
@@ -212,7 +216,7 @@ const initModalListeners = () => {
     });
   });
 
-  // Create Task Button
+  // "New Task" button in toolbar
   const addTaskBtn = document.getElementById('addTaskBtn');
   if (addTaskBtn) {
     addTaskBtn.addEventListener('click', () => {
@@ -221,21 +225,23 @@ const initModalListeners = () => {
     });
   }
 
-  // Task Form Submit
+  // Task form submit (handles both CREATE and EDIT)
   const taskForm = document.getElementById('taskForm');
   if (taskForm) {
     taskForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const taskId = document.getElementById('taskIdInput').value;
-      const title = document.getElementById('taskTitle').value;
-      const description = document.getElementById('taskDescription').value;
+      // Clear old errors
+      taskForm.querySelectorAll('.form-error').forEach(el => (el.textContent = ''));
+
+      const taskId = document.getElementById('taskIdInput').value.trim();
+      const title = document.getElementById('taskTitle').value.trim();
+      const description = document.getElementById('taskDescription').value.trim();
       const priority = document.getElementById('taskPriority').value;
-      const assignee = document.getElementById('taskAssignee').value;
+      const assignee = document.getElementById('taskAssignee').value.trim();
       const dueDate = document.getElementById('taskDueDate').value;
       const status = document.getElementById('taskStatus').value;
 
-      // Extract checked dependencies
       const depCheckboxes = taskForm.querySelectorAll('input[name="dependsOn"]:checked');
       const dependsOn = Array.from(depCheckboxes).map(cb => cb.value);
 
@@ -248,22 +254,22 @@ const initModalListeners = () => {
         return;
       }
 
+      let result;
       if (taskId) {
-        // Edit existing task
-        const result = taskManager.updateTask(taskId, formData);
-        if (!result.success) {
-          showToast(`Error: ${result.message}`, 'error');
-          return;
+        result = taskManager.updateTask(taskId, formData);
+        if (result.success) {
+          showToast(`✓ Updated "${result.task.title}"`, 'success');
         }
-        showToast(`Updated task "${result.task.title}"`, 'success');
       } else {
-        // Create new task
-        const result = taskManager.addTask(formData);
-        if (!result.success) {
-          showToast(`Error: ${result.message}`, 'error');
-          return;
+        result = taskManager.addTask(formData);
+        if (result.success) {
+          showToast(`✓ Created "${result.task.title}"`, 'success');
         }
-        showToast(`Created new task "${result.task.title}"`, 'success');
+      }
+
+      if (!result.success) {
+        showToast(`Error: ${result.message}`, 'error');
+        return;
       }
 
       closeModal('taskModal');
@@ -271,7 +277,7 @@ const initModalListeners = () => {
     });
   }
 
-  // Delegated Card Actions (Inspect, Edit, Delete)
+  // Delegated card actions: Inspect, Edit, Delete
   const board = document.getElementById('kanbanBoard');
   if (board) {
     board.addEventListener('click', (e) => {
@@ -280,15 +286,13 @@ const initModalListeners = () => {
       const deleteBtn = e.target.closest('.btn-delete');
 
       if (inspectBtn) {
-        const id = inspectBtn.dataset.id;
-        const task = taskManager.getTaskById(id);
+        const task = taskManager.getTaskById(inspectBtn.dataset.id);
         if (task) {
           renderDependencyInspector(task, taskManager.getAllTasks());
           openModal('inspectorModal');
         }
       } else if (editBtn) {
-        const id = editBtn.dataset.id;
-        const task = taskManager.getTaskById(id);
+        const task = taskManager.getTaskById(editBtn.dataset.id);
         if (task) {
           populateTaskForm(task, taskManager.getAllTasks());
           openModal('taskModal');
@@ -299,27 +303,27 @@ const initModalListeners = () => {
 
         const result = taskManager.deleteTask(id, false);
         if (!result.success && result.requiresConfirmation) {
-          // Open confirm modal with warning message
           document.getElementById('deleteConfirmMessage').innerHTML = `
-            <strong>Warning:</strong> Task "${result.dependentTitles.join(', ')}" depends on this task.<br><br>
-            Deleting it will safely clean references, but may unlock dependent tasks. Continue?
+            <strong>Warning:</strong> The following tasks depend on this:<br>
+            <em>${result.dependentTitles.join(', ')}</em><br><br>
+            Deleting it will remove the dependency reference. Continue?
           `;
           openModal('deleteModal');
         } else if (result.success) {
-          showToast('Task deleted', 'info');
+          showToast('Task deleted.', 'info');
           refreshAppUI();
         }
       }
     });
   }
 
-  // Confirm Delete Action
+  // Confirm delete
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
   if (confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', () => {
       if (appState.taskToDeleteId) {
         taskManager.deleteTask(appState.taskToDeleteId, true);
-        showToast('Task deleted successfully', 'info');
+        showToast('Task deleted.', 'info');
         appState.taskToDeleteId = null;
         closeModal('deleteModal');
         refreshAppUI();
@@ -328,66 +332,74 @@ const initModalListeners = () => {
   }
 };
 
-// Demo Scenario Quick-Demonstration Controls (For Examiner Viva)
+// ─── Demo Scenario Buttons ────────────────────────────────────────────────────
 const initDemoScenarioButtons = () => {
   const resetBtn = document.getElementById('demoResetBtn');
   const completeDepBtn = document.getElementById('demoCompleteDepBtn');
   const tryLockedBtn = document.getElementById('demoTryLockedBtn');
   const showChainBtn = document.getElementById('demoShowChainBtn');
 
+  // Reset workspace to seed state
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       taskManager.resetDemoWorkspace();
       refreshAppUI();
-      showToast('Demo scenario workspace reset to initial state', 'success');
+      showToast('Workspace reset to initial demo state', 'success');
     });
   }
 
+  // Complete a blocking prerequisite → unlock a downstream task
   if (completeDepBtn) {
     completeDepBtn.addEventListener('click', () => {
-      // Find task-5 (Authentication & Session Service) and mark it Done
-      const task5 = taskManager.getTaskById('task-5');
-      if (task5) {
-        const res = taskManager.moveTaskStatus('task-5', 'Done');
-        if (res.success) {
-          showToast('✓ Marked "Authentication & Session Service" as Done! "Kanban Dashboard UI Integration" is now UNLOCKED!', 'success', 5000);
-          refreshAppUI();
-        }
+      // Find the first blocking dependency (an incomplete dep of a locked task)
+      const blocking = taskManager.getFirstBlockingDependency();
+      if (!blocking) {
+        showToast('No blocking dependencies found. Try resetting the workspace first.', 'warning');
+        return;
+      }
+      const result = taskManager.moveTaskStatus(blocking.id, 'Done');
+      if (result.success) {
+        const unlocked = result.affectedDependents || [];
+        const unlockedNames = unlocked.filter(t => !t.locked).map(t => t.title).join(', ');
+        showToast(
+          `✓ "${blocking.title}" marked Done!${unlockedNames ? ` Unlocked: ${unlockedNames}` : ''}`,
+          'success',
+          5000
+        );
+        refreshAppUI();
       } else {
-        showToast('Task-5 not found. Reset demo first.', 'warning');
+        showToast(`Could not mark Done: ${result.message}`, 'error');
       }
     });
   }
 
+  // Try to move a locked task — triggers anti-cheat
   if (tryLockedBtn) {
     tryLockedBtn.addEventListener('click', () => {
-      // Attempt to move locked task-7 to In Progress
-      const task7 = taskManager.getTaskById('task-7');
-      if (task7) {
-        const res = taskManager.moveTaskStatus('task-7', 'In Progress');
-        if (!res.success) {
-          showToast(`🔒 Anti-Cheat Action: ${res.message}`, 'error', 6000);
-          renderDependencyInspector(task7, taskManager.getAllTasks());
-          openModal('inspectorModal');
-        }
-      } else {
-        showToast('Task-7 not found. Reset demo first.', 'warning');
+      const locked = taskManager.getFirstLockedTask();
+      if (!locked) {
+        showToast('No locked tasks found right now. Try resetting the workspace.', 'warning');
+        return;
       }
+      handleTaskMove(locked.id, 'In Progress');
     });
   }
 
+  // Show dependency chain for first locked task
   if (showChainBtn) {
     showChainBtn.addEventListener('click', () => {
-      const task7 = taskManager.getTaskById('task-7');
-      if (task7) {
-        renderDependencyInspector(task7, taskManager.getAllTasks());
-        openModal('inspectorModal');
+      const locked = taskManager.getFirstLockedTask();
+      if (!locked) {
+        showToast('No locked tasks to inspect. Try resetting the workspace.', 'warning');
+        return;
       }
+      renderDependencyInspector(locked, taskManager.getAllTasks());
+      openModal('inspectorModal');
     });
   }
 };
 
-// JSON Import / Export Handlers
+// ─── JSON Import / Export ─────────────────────────────────────────────────────
 const initJsonImportExport = () => {
   const exportBtn = document.getElementById('exportJsonBtn');
   const importBtn = document.getElementById('importJsonBtn');
@@ -396,14 +408,12 @@ const initJsonImportExport = () => {
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
       exportBoardAsJSON(taskManager.getAllTasks());
-      showToast('Board exported as JSON file', 'success');
+      showToast('Board exported as JSON', 'success');
     });
   }
 
   if (importBtn && fileInput) {
-    importBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
+    importBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -415,7 +425,7 @@ const initJsonImportExport = () => {
         if (result.success) {
           taskManager.importBoardTasks(result.tasks);
           refreshAppUI();
-          showToast(`Successfully imported ${result.tasks.length} tasks!`, 'success');
+          showToast(`Imported ${result.tasks.length} tasks successfully!`, 'success');
         } else {
           showToast(`Import Error: ${result.error}`, 'error', 6000);
         }

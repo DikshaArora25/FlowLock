@@ -74,7 +74,7 @@ export const createTaskCardElement = (task, allTasks) => {
 
     ${depCount > 0 ? `
       <div class="card-dependencies-info">
-        <span>🔗 ${depCount} Dependency${depCount > 1 ? 'ies' : ''}</span>
+        <span>🔗 ${depCount} Dependenc${depCount > 1 ? 'ies' : 'y'}</span>
         ${task.locked ? `<span style="color: var(--status-locked); font-size:10px;">Waiting: ${escapeHtml(blocking[0] ? blocking[0].title : 'Incomplete')}</span>` : '<span style="color: var(--status-done); font-size:10px;">All Done</span>'}
       </div>
     ` : ''}

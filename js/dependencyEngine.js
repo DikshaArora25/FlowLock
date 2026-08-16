@@ -119,10 +119,14 @@ export const getBlockingDependencies = (task, tasks) => {
 export const recalculateLocks = (tasks) => {
   const updatedTasks = tasks.map(task => {
     const locked = isTaskLocked(task, tasks);
+    if (locked === task.locked) {
+      return { ...task }; // No change — preserve updatedAt
+    }
     return {
       ...task,
-      locked,
-      updatedAt: new Date().toISOString()
+      locked
+      // Note: updatedAt is intentionally NOT updated here.
+      // Lock state is a computed property, not a user action.
     };
   });
 

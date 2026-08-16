@@ -1,5 +1,5 @@
 /**
- * FlowLock Auth Module (SessionStorage Demo Login for CA-1 Phase)
+ * FlowLock Auth Module — SessionStorage-backed demo authentication guard
  */
 
 import { saveSessionUser, getSessionUser, clearSessionUser } from './storage.js';

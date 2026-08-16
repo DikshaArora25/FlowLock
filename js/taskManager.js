@@ -1,17 +1,18 @@
 /**
- * FlowLock Task Manager Module (Lectures 11-14: Array HOFs filter, map, reduce, sort, state management)
+ * FlowLock - Task Manager Module
+ * Central state store: CRUD, search, filter, sort, activity log, demo seed
  */
 
 import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
 import { recalculateLocks, detectCycle, propagateDependencyState, canMoveTask } from './dependencyEngine.js';
 import { generateId } from './utils.js';
 
-// Initial Demo Seed Tasks (10 Realistic Tasks with Branching Dependencies)
+// Realistic demo workspace with real dependency relationships
 const INITIAL_DEMO_TASKS = [
   {
     id: 'task-1',
-    title: 'Project Requirements & Architecture',
-    description: 'Define syllabus objectives, technical scope, and system design document.',
+    title: 'Project Requirements & Planning',
+    description: 'Define the technical scope, system architecture, and data schema for the workspace platform.',
     status: 'Done',
     priority: 'High',
     assignee: 'Diksha',
@@ -24,7 +25,7 @@ const INITIAL_DEMO_TASKS = [
   {
     id: 'task-2',
     title: 'Database Schema Design',
-    description: 'Structure JSON schema for tasks, dependency relations, and status enums.',
+    description: 'Structure the data model for tasks, dependency relations, and status state machines.',
     status: 'Done',
     priority: 'High',
     assignee: 'Diksha',
@@ -36,8 +37,8 @@ const INITIAL_DEMO_TASKS = [
   },
   {
     id: 'task-3',
-    title: 'User Authentication Data Model',
-    description: 'Design user profile schemas and session state structures for demo auth.',
+    title: 'User Authentication Service',
+    description: 'Design and implement the session management system with route protection guards.',
     status: 'Done',
     priority: 'Medium',
     assignee: 'Diksha',
@@ -49,8 +50,8 @@ const INITIAL_DEMO_TASKS = [
   },
   {
     id: 'task-4',
-    title: 'Backend API Setup',
-    description: 'Build core business logic modules for task management and state validation.',
+    title: 'Core API & Business Logic',
+    description: 'Build the core business logic modules for task management and state validation.',
     status: 'Done',
     priority: 'High',
     assignee: 'Diksha',
@@ -62,47 +63,47 @@ const INITIAL_DEMO_TASKS = [
   },
   {
     id: 'task-5',
-    title: 'Authentication & Session Service',
-    description: 'Implement SessionStorage authentication guard and route protection handlers.',
+    title: 'Dependency Graph Engine',
+    description: 'Implement DFS cycle detection and topological lock propagation algorithms.',
     status: 'In Progress',
     priority: 'High',
     assignee: 'Diksha',
-    dueDate: '2026-08-18',
-    dependsOn: ['task-3'],
+    dueDate: '2026-08-17',
+    dependsOn: ['task-4'],
     locked: false,
     createdAt: '2026-08-05T10:00:00.000Z',
     updatedAt: '2026-08-14T09:00:00.000Z'
   },
   {
     id: 'task-6',
-    title: 'Dependency Graph Engine',
-    description: 'Implement DFS cycle detection and topological status lock calculation.',
-    status: 'Done',
+    title: 'Authentication Integration',
+    description: 'Wire auth service into the main application flow with session persistence.',
+    status: 'Todo',
     priority: 'High',
     assignee: 'Diksha',
-    dueDate: '2026-08-17',
-    dependsOn: ['task-4'],
+    dueDate: '2026-08-18',
+    dependsOn: ['task-3'],
     locked: false,
     createdAt: '2026-08-06T10:00:00.000Z',
     updatedAt: '2026-08-15T15:00:00.000Z'
   },
   {
     id: 'task-7',
-    title: 'Kanban Dashboard UI Integration',
-    description: 'Build drag and drop columns, status badges, and interactive task cards.',
+    title: 'Kanban Dashboard UI',
+    description: 'Build the drag-and-drop Kanban board with status columns, task cards, and lock indicators.',
     status: 'Todo',
     priority: 'High',
     assignee: 'Diksha',
     dueDate: '2026-08-20',
     dependsOn: ['task-5', 'task-6'],
-    locked: true, // task-5 is In Progress (not Done), so task-7 is LOCKED!
+    locked: true,
     createdAt: '2026-08-07T10:00:00.000Z',
     updatedAt: '2026-08-15T15:00:00.000Z'
   },
   {
     id: 'task-8',
-    title: 'End-to-End System Testing',
-    description: 'Perform unit tests on cycle detection, lock propagation, and edge cases.',
+    title: 'End-to-End Integration Testing',
+    description: 'Verify cycle detection, lock propagation, drag-and-drop, and storage across all edge cases.',
     status: 'Todo',
     priority: 'Medium',
     assignee: 'Diksha',
@@ -114,8 +115,8 @@ const INITIAL_DEMO_TASKS = [
   },
   {
     id: 'task-9',
-    title: 'Production Cloud Deployment',
-    description: 'Configure production hosting, environment variables, and static build delivery.',
+    title: 'Production Deployment',
+    description: 'Configure production hosting, environment setup, and static build delivery pipeline.',
     status: 'Backlog',
     priority: 'High',
     assignee: 'Diksha',
@@ -127,8 +128,8 @@ const INITIAL_DEMO_TASKS = [
   },
   {
     id: 'task-10',
-    title: 'Documentation & Final Viva Prep',
-    description: 'Compile README concept mapping, architectural diagrams, and rubric checklists.',
+    title: 'Documentation & README',
+    description: 'Write comprehensive documentation covering architecture, setup, and technical decisions.',
     status: 'Backlog',
     priority: 'Low',
     assignee: 'Diksha',
@@ -148,12 +149,11 @@ class TaskManager {
   }
 
   init() {
-    // Load from LocalStorage or seed initial demo workspace
-    let loaded = loadTasks();
+    const loaded = loadTasks();
     if (!loaded || loaded.length === 0) {
       this.tasks = recalculateLocks(INITIAL_DEMO_TASKS);
       saveTasks(this.tasks);
-      this.logActivity('Workspace initialized with demo project tasks', 'system');
+      this.logActivity('Workspace initialized with demo project', 'system');
     } else {
       this.tasks = recalculateLocks(loaded);
     }
@@ -164,23 +164,36 @@ class TaskManager {
   resetDemoWorkspace() {
     this.tasks = recalculateLocks(INITIAL_DEMO_TASKS);
     saveTasks(this.tasks);
-    this.logActivity('Demo scenario workspace reset to default state', 'system');
+    this.logActivity('Workspace reset to initial demo state', 'system');
     return this.tasks;
   }
 
-  // Get all tasks
   getAllTasks() {
     return this.tasks;
   }
 
-  // Get single task by ID
   getTaskById(id) {
-    return this.tasks.find(t => t.id === id);
+    return this.tasks.find(t => t.id === id) || null;
   }
 
-  // Add Task
+  // Returns a currently locked task, or null if none
+  getFirstLockedTask() {
+    return this.tasks.find(t => t.locked) || null;
+  }
+
+  // Returns a currently blocking dependency (incomplete prerequisite of a locked task)
+  getFirstBlockingDependency() {
+    const lockedTask = this.getFirstLockedTask();
+    if (!lockedTask) return null;
+    const taskMap = new Map(this.tasks.map(t => [t.id, t]));
+    for (const depId of lockedTask.dependsOn) {
+      const dep = taskMap.get(depId);
+      if (dep && dep.status !== 'Done') return dep;
+    }
+    return null;
+  }
+
   addTask(taskData) {
-    // Check cycle detection for all proposed dependencies
     if (Array.isArray(taskData.dependsOn)) {
       const tempId = generateId();
       for (const depId of taskData.dependsOn) {
@@ -197,9 +210,9 @@ class TaskManager {
       description: taskData.description ? taskData.description.trim() : '',
       status: taskData.status || 'Todo',
       priority: taskData.priority || 'Medium',
-      assignee: taskData.assignee || 'Unassigned',
+      assignee: taskData.assignee ? taskData.assignee.trim() : 'Unassigned',
       dueDate: taskData.dueDate || '',
-      dependsOn: Array.isArray(taskData.dependsOn) ? taskData.dependsOn : [],
+      dependsOn: Array.isArray(taskData.dependsOn) ? [...taskData.dependsOn] : [],
       locked: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -208,12 +221,10 @@ class TaskManager {
     this.tasks.push(newTask);
     this.tasks = recalculateLocks(this.tasks);
     saveTasks(this.tasks);
-
     this.logActivity(`Created task "${newTask.title}"`, 'add');
-    return { success: true, task: newTask };
+    return { success: true, task: this.getTaskById(newTask.id) };
   }
 
-  // Update Task
   updateTask(taskId, updatedFields) {
     const taskIndex = this.tasks.findIndex(t => t.id === taskId);
     if (taskIndex === -1) {
@@ -222,35 +233,33 @@ class TaskManager {
 
     const currentTask = this.tasks[taskIndex];
 
-    // If dependencies changed, perform cycle checks
     if (updatedFields.dependsOn && Array.isArray(updatedFields.dependsOn)) {
       for (const depId of updatedFields.dependsOn) {
+        if (depId === taskId) {
+          return { success: false, message: 'A task cannot depend on itself.' };
+        }
         const cycleCheck = detectCycle(taskId, depId, this.tasks);
         if (cycleCheck.hasCycle) {
-          return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}` };
+          return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}` };
         }
       }
     }
 
-    // Merge updated fields
     const updatedTask = {
       ...currentTask,
       ...updatedFields,
+      id: taskId, // never overwrite id
       updatedAt: new Date().toISOString()
     };
 
     this.tasks[taskIndex] = updatedTask;
-
-    // Trigger lock recalculation & propagation
     const propagation = propagateDependencyState(this.tasks, taskId);
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
-
     this.logActivity(`Updated task "${updatedTask.title}"`, 'edit');
-    return { success: true, task: updatedTask };
+    return { success: true, task: this.getTaskById(taskId) };
   }
 
-  // Move Task Status with Anti-Cheat Enforcement
   moveTaskStatus(taskId, newStatus) {
     const task = this.getTaskById(taskId);
     if (!task) {
@@ -261,10 +270,9 @@ class TaskManager {
       return { success: true, task };
     }
 
-    // Validate status movement rule
     const validation = canMoveTask(task, newStatus, this.tasks);
     if (!validation.allowed) {
-      this.logActivity(`Blocked movement of "${task.title}" to ${newStatus}`, 'blocked');
+      this.logActivity(`Blocked: "${task.title}" → ${newStatus} (dependency not met)`, 'blocked');
       return {
         success: false,
         message: validation.reason,
@@ -273,24 +281,32 @@ class TaskManager {
     }
 
     const oldStatus = task.status;
-    task.status = newStatus;
-    task.updatedAt = new Date().toISOString();
 
-    // Propagate state changes to dependent tasks
+    // Mutate in-place then propagate
+    const taskRef = this.tasks.find(t => t.id === taskId);
+    taskRef.status = newStatus;
+    taskRef.updatedAt = new Date().toISOString();
+
     const propagation = propagateDependencyState(this.tasks, taskId);
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
 
-    this.logActivity(`Moved "${task.title}" from ${oldStatus} to ${newStatus}`, 'move');
-    return { success: true, task, affectedDependents: propagation.affectedDependents };
+    this.logActivity(`"${task.title}": ${oldStatus} → ${newStatus}`, 'move');
+
+    if (newStatus === 'Done') {
+      const unlocked = propagation.affectedDependents.filter(d => !d.locked);
+      unlocked.forEach(d => {
+        this.logActivity(`"${d.title}" is now unblocked`, 'unlock');
+      });
+    }
+
+    return { success: true, task: this.getTaskById(taskId), affectedDependents: propagation.affectedDependents };
   }
 
-  // Delete Task with Dependency Cascade Alert / Clean Up
   deleteTask(taskId, force = false) {
     const task = this.getTaskById(taskId);
     if (!task) return { success: false, message: 'Task not found.' };
 
-    // Check if other tasks depend on this task
     const dependentTasks = this.tasks.filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(taskId));
 
     if (dependentTasks.length > 0 && !force) {
@@ -299,48 +315,39 @@ class TaskManager {
         requiresConfirmation: true,
         dependentCount: dependentTasks.length,
         dependentTitles: dependentTasks.map(t => t.title),
-        message: `Task "${task.title}" is a dependency for ${dependentTasks.length} task(s).`
+        message: `"${task.title}" is required by ${dependentTasks.length} task(s): ${dependentTasks.map(t => t.title).join(', ')}`
       };
     }
 
-    // Remove task and clean up references from other tasks' dependsOn arrays
     this.tasks = this.tasks
       .filter(t => t.id !== taskId)
-      .map(t => ({
-        ...t,
-        dependsOn: t.dependsOn.filter(depId => depId !== taskId)
-      }));
+      .map(t => ({ ...t, dependsOn: (t.dependsOn || []).filter(id => id !== taskId) }));
 
     this.tasks = recalculateLocks(this.tasks);
     saveTasks(this.tasks);
-
     this.logActivity(`Deleted task "${task.title}"`, 'delete');
     return { success: true };
   }
 
-  // Overwrite Entire Board (Used in JSON Import)
   importBoardTasks(importedTasks) {
     this.tasks = recalculateLocks(importedTasks);
     saveTasks(this.tasks);
-    this.logActivity(`Imported workspace with ${importedTasks.length} tasks`, 'system');
+    this.logActivity(`Imported workspace: ${importedTasks.length} tasks`, 'system');
     return this.tasks;
   }
 
-  // Filter & Search & Sort Tasks (Using Array HOFs filter, sort)
-  getFilteredTasks({ search = '', filterStatus = 'all', sortBy = 'priority' }) {
+  getFilteredTasks({ search = '', filterStatus = 'all', sortBy = 'priority' } = {}) {
     let result = [...this.tasks];
 
-    // Search filter
     if (search && search.trim() !== '') {
       const q = search.toLowerCase().trim();
-      result = result.filter(t => 
-        t.title.toLowerCase().includes(q) || 
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
         t.assignee.toLowerCase().includes(q)
       );
     }
 
-    // Status / Lock Filter
     if (filterStatus !== 'all') {
       if (filterStatus === 'locked') {
         result = result.filter(t => t.locked);
@@ -351,11 +358,10 @@ class TaskManager {
       }
     }
 
-    // Sort
     const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
     result.sort((a, b) => {
       if (sortBy === 'priority') {
-        return priorityWeight[b.priority] - priorityWeight[a.priority];
+        return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
       } else if (sortBy === 'dueDate') {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
@@ -363,7 +369,7 @@ class TaskManager {
       } else if (sortBy === 'title') {
         return a.title.localeCompare(b.title);
       } else if (sortBy === 'dependencies') {
-        return b.dependsOn.length - a.dependsOn.length;
+        return (b.dependsOn || []).length - (a.dependsOn || []).length;
       }
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
@@ -371,33 +377,20 @@ class TaskManager {
     return result;
   }
 
-  // Dynamic Dashboard Metrics Calculation (Using reduce & filter)
   getMetrics() {
     const total = this.tasks.length;
-    const todo = this.tasks.filter(t => t.status === 'Todo').length;
     const backlog = this.tasks.filter(t => t.status === 'Backlog').length;
+    const todo = this.tasks.filter(t => t.status === 'Todo').length;
     const inProgress = this.tasks.filter(t => t.status === 'In Progress').length;
     const done = this.tasks.filter(t => t.status === 'Done').length;
     const locked = this.tasks.filter(t => t.locked).length;
-    
-    // Dependency chains metric: tasks with at least 1 dependency
-    const withDeps = this.tasks.filter(t => t.dependsOn.length > 0).length;
-
+    const withDeps = this.tasks.filter(t => (t.dependsOn || []).length > 0).length;
     const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
+    const unblockedHealth = total > 0 ? Math.round(((total - locked) / total) * 100) : 100;
 
-    return {
-      total,
-      backlog,
-      todo,
-      inProgress,
-      done,
-      locked,
-      withDeps,
-      completionRate
-    };
+    return { total, backlog, todo, inProgress, done, locked, withDeps, completionRate, unblockedHealth };
   }
 
-  // Log Activity
   logActivity(text, type = 'info') {
     const entry = {
       id: generateId('act'),
@@ -406,11 +399,13 @@ class TaskManager {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
     this.activities.unshift(entry);
+    // Keep at most 50 entries
+    if (this.activities.length > 50) this.activities = this.activities.slice(0, 50);
     saveActivityLog(this.activities);
   }
 
-  getRecentActivities() {
-    return this.activities.slice(0, 15);
+  getRecentActivities(limit = 20) {
+    return this.activities.slice(0, limit);
   }
 }
 
