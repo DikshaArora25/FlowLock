@@ -33,7 +33,7 @@ export const loginUser = (email, password) => {
 // Require active session check for protected pages
 export const checkAuthGuard = (currentPage) => {
   const session = getSessionUser();
-  if (currentPage === 'dashboard' && !session) {
+  if ((currentPage === 'dashboard' || currentPage === 'profile') && !session) {
     window.location.href = 'index.html';
   } else if (currentPage === 'login' && session) {
     window.location.href = 'dashboard.html';

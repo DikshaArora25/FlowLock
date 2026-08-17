@@ -1,5 +1,5 @@
 /**
- * FlowLock UI Rendering & Component Module (Lectures 17-20: DOM selection, DOM traversal, element creation, styles)
+ * FlowLock UI Rendering & Component Module
  */
 
 import { escapeHtml, formatDate } from './utils.js';
@@ -134,6 +134,36 @@ export const renderKanbanBoard = (tasks, allTasks) => {
       badge.textContent = counts[status];
     }
   });
+
+  // Render empty states for columns with 0 tasks
+  Object.keys(columns).forEach(status => {
+    const listEl = columns[status];
+    if (listEl && counts[status] === 0) {
+      const emptyEl = document.createElement('div');
+      emptyEl.className = 'column-empty-state';
+      emptyEl.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; border: 1px dashed var(--border-color); border-radius: var(--radius-md); color: var(--text-dim); text-align: center; font-size: 12px; height: 120px;';
+      
+      let emptyMsg = 'No tasks here yet.';
+      if (status === 'Todo') {
+        emptyMsg = 'No tasks here yet.<br><span style="font-size:11px;color:var(--accent-primary);cursor:pointer;font-weight:600;margin-top:4px;" id="empty-state-add-btn">+ Add Task</span>';
+      } else if (status === 'In Progress') {
+        emptyMsg = 'Move a ready task here when work begins.';
+      }
+      
+      emptyEl.innerHTML = emptyMsg;
+      listEl.appendChild(emptyEl);
+      
+      if (status === 'Todo') {
+        const addBtn = emptyEl.querySelector('#empty-state-add-btn');
+        if (addBtn) {
+          addBtn.addEventListener('click', () => {
+            const actAddBtn = document.getElementById('addTaskBtn');
+            if (actAddBtn) actAddBtn.click();
+          });
+        }
+      }
+    }
+  });
 };
 
 // Render Dependency Inspector Visual Graph Modal
@@ -142,74 +172,127 @@ export const renderDependencyInspector = (task, allTasks) => {
   const modalBody = document.getElementById('inspectorModalBody');
   if (!modalTitle || !modalBody) return;
 
-  modalTitle.textContent = `Dependency Inspector: ${task.title}`;
+  modalTitle.textContent = `Dependency Graph: ${task.title}`;
 
   const taskMap = new Map(allTasks.map(t => [t.id, t]));
+  
+  // Helpers to check status
+  const getTaskState = (t) => {
+    if (t.status === 'Done') return { text: 'DONE', class: 'done', icon: '🟢' };
+    if (t.locked) return { text: 'BLOCKED', class: 'blocking', icon: '🔒' };
+    if (t.status === 'In Progress') return { text: 'IN PROGRESS', class: 'pending', icon: '🟡' };
+    return { text: 'READY', class: 'ready', icon: '🔵' };
+  };
+
+  let html = `<div class="inspector-wrapper" style="display: flex; flex-direction: column; gap: 20px;">`;
+
+  // --- SECTION 1: DEPENDS ON ---
+  html += `<div>
+    <h4 style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+      🔗 DEPENDS ON (Prerequisites)
+    </h4>
+    <div class="inspector-chain">`;
 
   if (!task.dependsOn || task.dependsOn.length === 0) {
-    modalBody.innerHTML = `
-      <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-        <p style="font-size: 24px; margin-bottom: 8px;">🟢 Unrestricted Task</p>
-        <p>This task has no prerequisites and can be started immediately.</p>
-      </div>
-    `;
-    return;
-  }
-
-  let html = `<div class="inspector-chain">`;
-  html += `<p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-    To unlock <strong>${escapeHtml(task.title)}</strong>, all of the following dependencies must reach <span style="color: var(--status-done);">Done</span> status:
-  </p>`;
-
-  task.dependsOn.forEach((depId, index) => {
-    const depTask = taskMap.get(depId);
-    let nodeClass = 'pending';
-    let icon = '🟡';
-    let statusText = 'Pending';
-
-    if (depTask) {
-      if (depTask.status === 'Done') {
-        nodeClass = 'done';
-        icon = '🟢';
-        statusText = 'Completed (Done)';
-      } else if (task.locked && depTask.status !== 'Done') {
-        nodeClass = 'blocking';
-        icon = '🔴';
-        statusText = `Blocking (${depTask.status})`;
-      } else {
-        statusText = depTask.status;
-      }
-    }
-
     html += `
-      <div class="inspector-node ${nodeClass}">
-        <span class="node-status-icon">${icon}</span>
-        <div class="node-info">
-          <span class="node-title">${escapeHtml(depTask ? depTask.title : `Task ID: ${depId}`)}</span>
-          <span class="node-meta">Status: <strong>${statusText}</strong> | Priority: ${depTask ? depTask.priority : 'N/A'} | Assignee: ${depTask ? depTask.assignee : 'N/A'}</span>
+      <div style="padding: 12px; border: 1px dashed var(--border-color); border-radius: var(--radius-md); text-align: center; color: var(--text-dim); font-size: 12px;">
+        No prerequisites. This task can be started immediately.
+      </div>`;
+  } else {
+    task.dependsOn.forEach((depId, index) => {
+      const depTask = taskMap.get(depId);
+      if (depTask) {
+        const state = getTaskState(depTask);
+        html += `
+          <div class="inspector-node ${state.class}">
+            <span class="node-status-icon">${state.icon}</span>
+            <div class="node-info" style="flex: 1;">
+              <span class="node-title" style="font-weight: 600; font-size: 13px;">${escapeHtml(depTask.title)}</span>
+              <div class="node-meta" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-top: 2px;">
+                <span>State: <strong class="priority-${state.class}">${state.text}</strong></span>
+                <span>Assignee: ${escapeHtml(depTask.assignee)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        if (index < task.dependsOn.length - 1) {
+          html += `<div class="inspector-arrow" style="text-align: center; color: var(--text-dim); margin: 2px 0;">↓</div>`;
+        }
+      } else {
+        html += `
+          <div class="inspector-node blocking">
+            <span class="node-status-icon">⚠️</span>
+            <div class="node-info" style="flex: 1;">
+              <span class="node-title" style="font-weight: 600; font-size: 13px;">Missing Task (ID: ${depId})</span>
+              <div class="node-meta" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-top: 2px;">
+                <span>State: <strong class="priority-blocking">UNKNOWN</strong></span>
+              </div>
+            </div>
+          </div>
+        `;
+        if (index < task.dependsOn.length - 1) {
+          html += `<div class="inspector-arrow" style="text-align: center; color: var(--text-dim); margin: 2px 0;">↓</div>`;
+        }
+      }
+    });
+  }
+  html += `</div></div>`;
+
+  // --- SECTION 2: CURRENT TARGET ---
+  const currentStat = getTaskState(task);
+  html += `
+    <div style="margin: 10px 0; text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <div style="color: var(--text-dim); margin-bottom: 6px;">▼</div>
+      <div class="inspector-node current" style="border: 2px solid var(--accent-primary); width: 100%;">
+        <span class="node-status-icon">${currentStat.icon}</span>
+        <div class="node-info" style="text-align: left; flex: 1;">
+          <span class="node-title" style="font-weight: 700; font-size: 14px; color: var(--accent-primary);">${escapeHtml(task.title)} (Target)</span>
+          <div class="node-meta" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-top: 2px;">
+            <span>State: <strong>${currentStat.text}</strong></span>
+            <span>Column: ${task.status}</span>
+          </div>
         </div>
       </div>
-    `;
-
-    if (index < task.dependsOn.length - 1) {
-      html += `<div class="inspector-arrow">↓</div>`;
-    }
-  });
-
-  html += `<div class="inspector-arrow">↓</div>`;
-  
-  html += `
-    <div class="inspector-node current">
-      <span class="node-status-icon">🔵</span>
-      <div class="node-info">
-        <span class="node-title">${escapeHtml(task.title)} (Target Task)</span>
-        <span class="node-meta">Current Status: <strong>${task.status}</strong> | Lock State: <strong>${task.locked ? '🔒 LOCKED' : '🔓 UNLOCKED'}</strong></span>
-      </div>
+      <div style="color: var(--text-dim); margin-top: 6px;">▼</div>
     </div>
   `;
 
-  html += `</div>`;
+  // --- SECTION 3: BLOCKS (Dependents) ---
+  const dependents = allTasks.filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(task.id));
+  html += `<div>
+    <h4 style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+      🚫 BLOCKS (Downstream Dependents)
+    </h4>
+    <div class="inspector-chain">`;
 
+  if (dependents.length === 0) {
+    html += `
+      <div style="padding: 12px; border: 1px dashed var(--border-color); border-radius: var(--radius-md); text-align: center; color: var(--text-dim); font-size: 12px;">
+        No downstream tasks depend on this.
+      </div>`;
+  } else {
+    dependents.forEach((depTask, index) => {
+      const state = getTaskState(depTask);
+      html += `
+        <div class="inspector-node ${state.class}">
+          <span class="node-status-icon">${state.icon}</span>
+          <div class="node-info" style="flex: 1;">
+            <span class="node-title" style="font-weight: 600; font-size: 13px;">${escapeHtml(depTask.title)}</span>
+            <div class="node-meta" style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-top: 2px;">
+              <span>State: <strong class="priority-${state.class}">${state.text}</strong></span>
+              <span>Assignee: ${escapeHtml(depTask.assignee)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      if (index < dependents.length - 1) {
+        html += `<div class="inspector-arrow" style="text-align: center; color: var(--text-dim); margin: 2px 0;">↓</div>`;
+      }
+    });
+  }
+  html += `</div></div>`;
+
+  html += `</div>`; // Close wrapper
   modalBody.innerHTML = html;
 };
 
@@ -221,6 +304,11 @@ export const populateTaskForm = (task = null, allTasks = []) => {
   const currentTaskId = task ? task.id : '';
   document.getElementById('taskIdInput').value = currentTaskId;
   document.getElementById('formTitle').textContent = task ? 'Edit Task' : 'Create New Task';
+
+  const submitBtn = document.getElementById('submitTaskBtn');
+  if (submitBtn) {
+    submitBtn.textContent = task ? 'Save Changes' : 'Create Task';
+  }
 
   document.getElementById('taskTitle').value = task ? task.title : '';
   document.getElementById('taskDescription').value = task ? task.description : '';

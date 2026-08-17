@@ -1,6 +1,6 @@
 /**
  * FlowLock Dependency Validation & Graph Cycle Detection Engine
- * Core Algorithmic Component (Lectures 5-10: Recursion, Graph Algorithms, Array Traversal)
+ * Core Algorithmic Component
  */
 
 /**

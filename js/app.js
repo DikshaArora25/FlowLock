@@ -251,6 +251,7 @@ const initModalListeners = () => {
       const validation = validateTaskForm(formData, taskId, taskManager.getAllTasks());
       if (!validation.isValid) {
         renderFormErrors(taskForm, validation.errors);
+        showToast('Please fix the errors highlighted in the form.', 'error');
         return;
       }
 
@@ -272,6 +273,11 @@ const initModalListeners = () => {
         return;
       }
 
+      // Reset filters so created/edited task is visible
+      appState.searchQuery = '';
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      
       closeModal('taskModal');
       refreshAppUI();
     });
@@ -301,17 +307,19 @@ const initModalListeners = () => {
         const id = deleteBtn.dataset.id;
         appState.taskToDeleteId = id;
 
-        const result = taskManager.deleteTask(id, false);
-        if (!result.success && result.requiresConfirmation) {
-          document.getElementById('deleteConfirmMessage').innerHTML = `
-            <strong>Warning:</strong> The following tasks depend on this:<br>
-            <em>${result.dependentTitles.join(', ')}</em><br><br>
-            Deleting it will remove the dependency reference. Continue?
-          `;
+        const task = taskManager.getTaskById(id);
+        if (task) {
+          const dependentTasks = taskManager.getAllTasks().filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(id));
+          let confirmMsg = `Are you sure you want to delete the task "${escapeHtml(task.title)}"?`;
+          if (dependentTasks.length > 0) {
+            confirmMsg = `
+              <strong>Warning:</strong> The following tasks depend on this:<br>
+              <em>${dependentTasks.map(t => escapeHtml(t.title)).join(', ')}</em><br><br>
+              Deleting it will remove the dependency reference. Continue?
+            `;
+          }
+          document.getElementById('deleteConfirmMessage').innerHTML = confirmMsg;
           openModal('deleteModal');
-        } else if (result.success) {
-          showToast('Task deleted.', 'info');
-          refreshAppUI();
         }
       }
     });
@@ -338,6 +346,7 @@ const initDemoScenarioButtons = () => {
   const completeDepBtn = document.getElementById('demoCompleteDepBtn');
   const tryLockedBtn = document.getElementById('demoTryLockedBtn');
   const showChainBtn = document.getElementById('demoShowChainBtn');
+  const sidebarInspectBtn = document.getElementById('sidebarInspectBtn');
 
   // Reset workspace to seed state
   if (resetBtn) {
@@ -386,15 +395,24 @@ const initDemoScenarioButtons = () => {
   }
 
   // Show dependency chain for first locked task
+  const openInspectorForFirstLocked = () => {
+    const locked = taskManager.getFirstLockedTask();
+    if (!locked) {
+      showToast('No locked tasks to inspect. Try resetting the workspace.', 'warning');
+      return;
+    }
+    renderDependencyInspector(locked, taskManager.getAllTasks());
+    openModal('inspectorModal');
+  };
+
   if (showChainBtn) {
-    showChainBtn.addEventListener('click', () => {
-      const locked = taskManager.getFirstLockedTask();
-      if (!locked) {
-        showToast('No locked tasks to inspect. Try resetting the workspace.', 'warning');
-        return;
-      }
-      renderDependencyInspector(locked, taskManager.getAllTasks());
-      openModal('inspectorModal');
+    showChainBtn.addEventListener('click', openInspectorForFirstLocked);
+  }
+
+  if (sidebarInspectBtn) {
+    sidebarInspectBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openInspectorForFirstLocked();
     });
   }
 };

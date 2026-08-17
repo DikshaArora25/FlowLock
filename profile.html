@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock - User Profile</title>
+  <meta name="description" content="FlowLock User Profile and Session Details">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Nav -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🔒</span>
+        <span class="sidebar-title">FlowLock</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item">
+          <span class="nav-icon">📁</span>
+          <span>Workspace</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item active">
+          <span class="nav-icon">👤</span>
+          <span>Profile</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="themeToggleBtn" class="sidebar-footer-btn" title="Toggle Light/Dark Theme">
+          <span class="nav-icon">🌙</span>
+          <span>Theme</span>
+        </button>
+        <button id="sidebarLogoutBtn" class="sidebar-logout-btn">
+          <span class="nav-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="content-layout">
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-left">
+          <a href="dashboard.html" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
+            ← Back to Workspace
+          </a>
+          <span class="workspace-title">Profile</span>
+        </div>
+
+        <div class="header-right">
+          <div class="user-profile" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;">
+            <div class="user-avatar">D</div>
+            <span id="userNameHeader" class="user-name" style="font-size: 13px; font-weight: 600;">Diksha</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Profile Container -->
+      <main class="main-container" style="max-width: 680px; margin: 30px auto 0 auto;">
+        <div class="profile-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md);">
+          
+          <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px;">
+            <div class="user-avatar" style="width: 60px; height: 60px; font-size: 24px; background: var(--accent-primary);">D</div>
+            <div>
+              <h2 id="profileName" style="font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">DIKSHA</h2>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-done);"></span>
+                <span style="font-size: 13px; color: var(--status-done); font-weight: 600;">● Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Email</span>
+              <span id="profileEmail" style="font-size: 14px; color: var(--text-main); font-weight: 500;">demo@flowlock.app</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Role</span>
+              <span id="profileRole" style="font-size: 14px; color: var(--text-main); font-weight: 500;">Lead Engineer</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Account Status</span>
+              <span style="font-size: 14px; color: var(--status-done); font-weight: 600;">Active</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Session</span>
+              <span style="font-size: 14px; color: var(--text-main); font-weight: 500;">Authenticated</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+            <a href="dashboard.html" class="btn btn-secondary" style="text-decoration: none;">
+              ← Back to Workspace
+            </a>
+            <button id="logoutBtn" class="btn btn-danger">
+              🚪 Logout
+            </button>
+          </div>
+
+        </div>
+      </main>
+
+      <footer class="footer">
+        FlowLock — Dependencies decide what moves next.
+      </footer>
+    </div>
+  </div>
+
+  <script type="module">
+    import { checkAuthGuard, logoutUser } from './js/auth.js';
+    import { loadPreferences, savePreferences } from './js/storage.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auth Guard for profile page
+      const user = checkAuthGuard('profile');
+      if (user) {
+        document.getElementById('profileName').textContent = (user.name || 'DIKSHA').toUpperCase();
+        document.getElementById('userNameHeader').textContent = user.name || 'Diksha';
+        document.getElementById('profileEmail').textContent = user.email || 'demo@flowlock.app';
+        document.getElementById('profileRole').textContent = user.role || 'Lead Engineer';
+      }
+
+      // Theme toggle
+      const prefs = loadPreferences();
+      if (prefs.theme) {
+        document.documentElement.setAttribute('data-theme', prefs.theme);
+        const themeBtn = document.getElementById('themeToggleBtn');
+        if (themeBtn) themeBtn.textContent = prefs.theme === 'dark' ? '🌙' : '☀️';
+      }
+
+      const themeBtn = document.getElementById('themeToggleBtn');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const current = document.documentElement.getAttribute('data-theme') || 'dark';
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          savePreferences({ theme: next });
+          themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+      }
+
+      // Logout buttons
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+
+      const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+      if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /**
- * FlowLock Storage Module (Lectures 15-16, 23: LocalStorage, SessionStorage, JSON Serialization)
+ * FlowLock Storage Module
  */
 
 const STORAGE_KEYS = {

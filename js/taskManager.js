@@ -150,7 +150,7 @@ class TaskManager {
 
   init() {
     const loaded = loadTasks();
-    if (!loaded || loaded.length === 0) {
+    if (loaded === null) {
       this.tasks = recalculateLocks(INITIAL_DEMO_TASKS);
       saveTasks(this.tasks);
       this.logActivity('Workspace initialized with demo project', 'system');

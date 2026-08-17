@@ -1,5 +1,5 @@
 /**
- * FlowLock Utilities Module (Lectures 1–24: Functions, Arrow Functions, Scope, Template Literals, ES6)
+ * FlowLock Utilities Module
  */
 
 // Generate unique ID using timestamp and random string

@@ -1,5 +1,5 @@
 /**
- * FlowLock Form Validation Module (Lectures 21-22: Event Handling, preventDefault, Input Validation)
+ * FlowLock Form Validation Module
  */
 
 import { detectCycle } from './dependencyEngine.js';
@@ -37,6 +37,18 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
           break;
         }
       }
+    }
+  }
+
+  // Status vs Dependency validation
+  if ((formData.status === 'In Progress' || formData.status === 'Done') && Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
+    const taskMap = new Map(existingTasks.map(t => [t.id, t]));
+    const hasIncompleteDep = formData.dependsOn.some(depId => {
+      const dep = taskMap.get(depId);
+      return !dep || dep.status !== 'Done';
+    });
+    if (hasIncompleteDep) {
+      errors.status = `Cannot set status to "${formData.status}" while prerequisite dependencies are incomplete.`;
     }
   }
 

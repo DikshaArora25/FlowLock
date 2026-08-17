@@ -11,165 +11,204 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header-left">
-      <div class="brand-name">
-        <span>🔒 FlowLock</span>
-        <span class="brand-badge">PRO v1.0</span>
+  <div class="app-layout">
+    <!-- Sidebar Nav -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo">🔒</span>
+        <span class="sidebar-title">FlowLock</span>
       </div>
-      <span class="workspace-title">Dependency-Aware Workspace</span>
-    </div>
-
-    <div class="header-right">
-      <button id="themeToggleBtn" class="btn-icon" title="Toggle Light/Dark Theme">🌙</button>
       
-      <div class="user-profile">
-        <div class="user-avatar">D</div>
-        <span id="userName" class="user-name">Diksha</span>
-      </div>
-
-      <button id="logoutBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Logout</button>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="main-container">
-    
-    <!-- Quick Actions Banner -->
-    <section class="demo-banner">
-      <div class="demo-info">
-        <span style="font-size: 20px;">⚡</span>
-        <div>
-          <h3 class="demo-title">Dependency Engine: ACTIVE</h3>
-          <p class="demo-subtitle">Quick Actions & Dependency Simulation Suite</p>
-        </div>
-      </div>
-
-      <div class="demo-actions">
-        <button id="demoResetBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">🔄 Reset Workspace</button>
-        <button id="demoCompleteDepBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-done);">✓ Complete Prerequisite</button>
-        <button id="demoTryLockedBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-locked);">🔒 Simulate Blocked Move</button>
-        <button id="demoShowChainBtn" class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;">🔍 Inspect Graph</button>
-      </div>
-    </section>
-
-    <!-- Metrics Cards Grid -->
-    <section id="metricsGrid" class="metrics-grid">
-      <!-- Dynamic rendering via ui.js -->
-    </section>
-
-    <!-- Toolbar Controls -->
-    <section class="toolbar">
-      <div class="toolbar-left">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search tasks, descriptions, assignees...">
-        </div>
-
-        <select id="filterSelect" class="filter-select">
-          <option value="all">Filter: All Tasks</option>
-          <option value="Backlog">Status: Backlog</option>
-          <option value="Todo">Status: Todo</option>
-          <option value="In Progress">Status: In Progress</option>
-          <option value="Done">Status: Done</option>
-          <option value="locked">State: 🔒 Locked Only</option>
-          <option value="High">Priority: High</option>
-          <option value="Medium">Priority: Medium</option>
-          <option value="Low">Priority: Low</option>
-        </select>
-
-        <select id="sortSelect" class="filter-select">
-          <option value="priority">Sort by: Priority</option>
-          <option value="dueDate">Sort by: Due Date</option>
-          <option value="title">Sort by: Title</option>
-          <option value="dependencies">Sort by: Dependency Count</option>
-        </select>
-      </div>
-
-      <div class="toolbar-right">
-        <button id="exportJsonBtn" class="btn btn-secondary">📥 Export Board</button>
-        <button id="importJsonBtn" class="btn btn-secondary">📤 Import Board</button>
-        <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
-        <button id="addTaskBtn" class="btn btn-primary">➕ New Task</button>
-      </div>
-    </section>
-
-    <!-- 4-Column Kanban Board -->
-    <section id="kanbanBoard" class="board-container">
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item active">
+          <span class="nav-icon">📁</span>
+          <span>Workspace</span>
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <span class="nav-icon">✓</span>
+          <span>Tasks</span>
+        </a>
+        <a href="#" class="sidebar-nav-item" id="sidebarInspectBtn">
+          <span class="nav-icon">🔗</span>
+          <span>Dependencies</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item">
+          <span class="nav-icon">👤</span>
+          <span>Profile</span>
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Activity</span>
+        </a>
+      </nav>
       
-      <!-- BACKLOG Column -->
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title-group">
-            <span class="column-dot backlog"></span>
-            <span class="column-title">Backlog</span>
-          </div>
-          <span id="count-Backlog" class="column-count">0</span>
+      <div class="sidebar-footer">
+        <button id="themeToggleBtn" class="sidebar-footer-btn" title="Toggle Light/Dark Theme">
+          <span class="nav-icon">🌙</span>
+          <span>Theme</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="content-layout">
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-left">
+          <span class="workspace-title">Project Workspace</span>
         </div>
-        <div id="list-Backlog" class="task-list" data-status="Backlog"></div>
-      </div>
 
-      <!-- TODO Column -->
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title-group">
-            <span class="column-dot todo"></span>
-            <span class="column-title">Todo</span>
+        <div class="header-right">
+          <!-- Search box -->
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search tasks, assignees...">
           </div>
-          <span id="count-Todo" class="column-count">0</span>
-        </div>
-        <div id="list-Todo" class="task-list" data-status="Todo"></div>
-      </div>
+          
+          <!-- Quick Add Button -->
+          <button id="addTaskBtn" class="btn btn-primary" style="padding: 7px 14px; font-size: 12px;">
+            ➕ Quick Add
+          </button>
 
-      <!-- IN PROGRESS Column -->
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title-group">
-            <span class="column-dot in-progress"></span>
-            <span class="column-title">In Progress</span>
+          <!-- User Profile Direct Navigation -->
+          <a href="profile.html" id="profileLink" class="user-profile" style="cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px; text-decoration: none; transition: var(--transition);" title="Open Profile Page">
+            <div class="user-avatar">D</div>
+            <span id="userName" class="user-name" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Diksha</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Workspace Container -->
+      <main class="main-container">
+        
+        <!-- Quick Actions Banner -->
+        <section class="demo-banner">
+          <div class="demo-info">
+            <span style="font-size: 20px;">⚡</span>
+            <div>
+              <h3 class="demo-title">Dependency Engine: ACTIVE</h3>
+              <p class="demo-subtitle">Quick Actions & Dependency Simulation Suite</p>
+            </div>
           </div>
-          <span id="count-InProgress" class="column-count">0</span>
-        </div>
-        <div id="list-In Progress" class="task-list" data-status="In Progress"></div>
-      </div>
 
-      <!-- DONE Column -->
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title-group">
-            <span class="column-dot done"></span>
-            <span class="column-title">Done</span>
+          <div class="demo-actions">
+            <button id="demoResetBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">🔄 Reset Workspace</button>
+            <button id="demoCompleteDepBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-done);">✓ Complete Prerequisite</button>
+            <button id="demoTryLockedBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px; border-color: var(--status-locked);">🔒 Simulate Blocked Move</button>
+            <button id="demoShowChainBtn" class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;">🔍 Inspect Graph</button>
           </div>
-          <span id="count-Done" class="column-count">0</span>
-        </div>
-        <div id="list-Done" class="task-list" data-status="Done"></div>
-      </div>
+        </section>
 
-    </section>
+        <!-- Metrics Cards Grid -->
+        <section id="metricsGrid" class="metrics-grid">
+          <!-- Dynamic rendering via ui.js -->
+        </section>
 
-    <!-- Activity Log Section -->
-    <section class="activity-panel">
-      <div class="activity-header">
-        <span>📜 Workspace Activity</span>
-        <span style="font-size: 11px; color: var(--text-dim);">Real-time events & lock propagation</span>
-      </div>
-      <div id="activityList" class="activity-list"></div>
-    </section>
+        <!-- Toolbar Controls -->
+        <section class="toolbar">
+          <div class="toolbar-left">
+            <select id="filterSelect" class="filter-select">
+              <option value="all">Filter: All Tasks</option>
+              <option value="Backlog">Status: Backlog</option>
+              <option value="Todo">Status: Todo</option>
+              <option value="In Progress">Status: In Progress</option>
+              <option value="Done">Status: Done</option>
+              <option value="locked">State: 🔒 Locked Only</option>
+              <option value="High">Priority: High</option>
+              <option value="Medium">Priority: Medium</option>
+              <option value="Low">Priority: Low</option>
+            </select>
 
-  </main>
+            <select id="sortSelect" class="filter-select">
+              <option value="priority">Sort by: Priority</option>
+              <option value="dueDate">Sort by: Due Date</option>
+              <option value="title">Sort by: Title</option>
+              <option value="dependencies">Sort by: Dependency Count</option>
+            </select>
+          </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    FlowLock — Dependencies decide what moves next. Designed for software engineering teams.
-  </footer>
+          <div class="toolbar-right">
+            <button id="exportJsonBtn" class="btn btn-secondary">📥 Export Board</button>
+            <button id="importJsonBtn" class="btn btn-secondary">📤 Import Board</button>
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+          </div>
+        </section>
+
+        <!-- 4-Column Kanban Board -->
+        <section id="kanbanBoard" class="board-container">
+          <!-- BACKLOG Column -->
+          <div class="kanban-column">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot backlog"></span>
+                <span class="column-title">Backlog</span>
+              </div>
+              <span id="count-Backlog" class="column-count">0</span>
+            </div>
+            <div id="list-Backlog" class="task-list" data-status="Backlog"></div>
+          </div>
+
+          <!-- TODO Column -->
+          <div class="kanban-column">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot todo"></span>
+                <span class="column-title">Todo</span>
+              </div>
+              <span id="count-Todo" class="column-count">0</span>
+            </div>
+            <div id="list-Todo" class="task-list" data-status="Todo"></div>
+          </div>
+
+          <!-- IN PROGRESS Column -->
+          <div class="kanban-column">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot in-progress"></span>
+                <span class="column-title">In Progress</span>
+              </div>
+              <span id="count-InProgress" class="column-count">0</span>
+            </div>
+            <div id="list-In Progress" class="task-list" data-status="In Progress"></div>
+          </div>
+
+          <!-- DONE Column -->
+          <div class="kanban-column">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot done"></span>
+                <span class="column-title">Done</span>
+              </div>
+              <span id="count-Done" class="column-count">0</span>
+            </div>
+            <div id="list-Done" class="task-list" data-status="Done"></div>
+          </div>
+        </section>
+
+        <!-- Activity Log Section -->
+        <section class="activity-panel">
+          <div class="activity-header">
+            <span>📜 Workspace Activity</span>
+            <span style="font-size: 11px; color: var(--text-dim);">Real-time events & lock propagation</span>
+          </div>
+          <div id="activityList" class="activity-list"></div>
+        </section>
+
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        FlowLock — Dependencies decide what moves next. Designed for software engineering teams.
+      </footer>
+    </div>
+  </div>
 
   <!-- TASK ADD/EDIT MODAL -->
   <div id="taskModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="formTitle" class="modal-title">Create New Task</h3>
-        <button class="btn-icon btn-close-modal">✕</button>
+        <button type="button" class="btn-icon btn-close-modal">✕</button>
       </div>
 
       <form id="taskForm">
@@ -178,13 +217,13 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label" for="taskTitle">Task Title *</label>
-            <input type="text" id="taskTitle" class="form-input" placeholder="e.g., Build Authentication API" required>
+            <input type="text" id="taskTitle" class="form-input" placeholder="e.g., Build Authentication API">
             <div id="error-title" class="form-error"></div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="taskDescription">Description *</label>
-            <textarea id="taskDescription" class="form-textarea" placeholder="Detailed technical scope of the task..." required></textarea>
+            <textarea id="taskDescription" class="form-textarea" placeholder="Detailed technical scope of the task..."></textarea>
             <div id="error-description" class="form-error"></div>
           </div>
 
@@ -218,6 +257,7 @@
                 <option value="In Progress">In Progress</option>
                 <option value="Done">Done</option>
               </select>
+              <div id="error-status" class="form-error"></div>
             </div>
           </div>
 
@@ -232,7 +272,7 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Task</button>
+          <button type="submit" id="submitTaskBtn" class="btn btn-primary">Create Task</button>
         </div>
       </form>
     </div>
@@ -243,7 +283,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="inspectorModalTitle" class="modal-title">Dependency Inspector</h3>
-        <button class="btn-icon btn-close-modal">✕</button>
+        <button type="button" class="btn-icon btn-close-modal">✕</button>
       </div>
 
       <div id="inspectorModalBody" class="modal-body">
@@ -261,7 +301,7 @@
     <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header">
         <h3 class="modal-title" style="color: var(--status-locked);">Confirm Task Deletion</h3>
-        <button class="btn-icon btn-close-modal">✕</button>
+        <button type="button" class="btn-icon btn-close-modal">✕</button>
       </div>
 
       <div class="modal-body">
