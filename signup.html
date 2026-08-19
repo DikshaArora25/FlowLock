@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock — Create Account</title>
+  <meta name="description" content="Create your FlowLock account to manage dependency-aware projects.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page-body">
+
+  <div class="auth-split-layout">
+    
+    <!-- Left Hero Branding Section -->
+    <div class="auth-hero-pane">
+      <div class="auth-hero-content">
+        <a href="landing.html" class="auth-hero-logo">
+          <span class="auth-hero-logo-icon">🔒</span>
+          <span class="auth-hero-logo-text">FlowLock</span>
+        </a>
+
+        <div class="auth-hero-quote">
+          <h2 class="auth-hero-heading">
+            Join thousands of engineers building constraint-safe projects.
+          </h2>
+          <p class="auth-hero-sub">
+            Set up your workspace in seconds. Connect task dependencies, prevent circular bottlenecks, and automate lock propagation.
+          </p>
+        </div>
+
+        <div class="auth-visual-card">
+          <div class="auth-visual-header">
+            <span class="visual-dot green"></span>
+            <span class="visual-dot yellow"></span>
+            <span class="visual-dot red"></span>
+            <span class="visual-title">Workspace Setup</span>
+          </div>
+          <div class="auth-feature-list">
+            <div class="auth-feature-item">✓ Real-time DAG Dependency Engine</div>
+            <div class="auth-feature-item">✓ Depth-First Search Cycle Protection</div>
+            <div class="auth-feature-item">✓ Anti-Cheat Drag & Drop Kanban</div>
+            <div class="auth-feature-item">✓ Full JSON Workspace Import & Export</div>
+          </div>
+        </div>
+
+        <div class="auth-hero-footer">
+          <span>© 2026 FlowLock SaaS. Dependency-aware task management system.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="auth-form-pane">
+      <div class="auth-card-container">
+        
+        <div class="auth-form-header">
+          <h1 class="auth-form-title">Create Your Account</h1>
+          <p class="auth-form-subtitle">Get started with dependency-aware project management</p>
+        </div>
+
+        <form id="signupForm" class="auth-form-main">
+          
+          <div class="form-group">
+            <label for="signupName" class="form-label">Full Name *</label>
+            <input 
+              type="text" 
+              id="signupName" 
+              class="form-input" 
+              placeholder="e.g., Diksha Arora" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="signupEmail" class="form-label">Email Address *</label>
+            <input 
+              type="email" 
+              id="signupEmail" 
+              class="form-input" 
+              placeholder="name@company.com" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="signupPassword" class="form-label">Password * (Min. 6 characters)</label>
+            <input 
+              type="password" 
+              id="signupPassword" 
+              class="form-input" 
+              placeholder="••••••••" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="signupConfirmPassword" class="form-label">Confirm Password *</label>
+            <input 
+              type="password" 
+              id="signupConfirmPassword" 
+              class="form-input" 
+              placeholder="••••••••" 
+              required
+            >
+          </div>
+
+          <div id="signupError" class="form-error-banner" style="display: none;"></div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn">
+            Create Account & Launch Workspace ➔
+          </button>
+        </form>
+
+        <div class="auth-form-footer">
+          <p>Already have an account? <a href="login.html" class="auth-link">Sign In</a></p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { checkAuthGuard, signupUser } from './js/auth.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auth Guard for signup page
+      checkAuthGuard('signup');
+
+      const form = document.getElementById('signupForm');
+      const errorEl = document.getElementById('signupError');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.style.display = 'none';
+
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+        const result = signupUser({ name, email, password, confirmPassword });
+
+        if (result.success) {
+          window.location.href = 'dashboard.html';
+        } else {
+          errorEl.textContent = result.message;
+          errorEl.style.display = 'block';
+          errorEl.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
