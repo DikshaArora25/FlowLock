@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock — Sign In</title>
+  <meta name="description" content="Sign in to your FlowLock dependency-aware project workspace.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page-body">
+
+  <div class="auth-split-layout">
+    
+    <!-- Left Hero Branding Section -->
+    <div class="auth-hero-pane">
+      <div class="auth-hero-content">
+        <a href="landing.html" class="auth-hero-logo">
+          <span class="auth-hero-logo-icon">🔒</span>
+          <span class="auth-hero-logo-text">FlowLock</span>
+        </a>
+
+        <div class="auth-hero-quote">
+          <h2 class="auth-hero-heading">
+            Move work forward without losing sight of what blocks it.
+          </h2>
+          <p class="auth-hero-sub">
+            The dependency-aware Kanban platform built for engineering teams who need complete visibility into workflow constraints.
+          </p>
+        </div>
+
+        <!-- Abstract Productivity / Dependency Graphic -->
+        <div class="auth-visual-card">
+          <div class="auth-visual-header">
+            <span class="visual-dot green"></span>
+            <span class="visual-dot yellow"></span>
+            <span class="visual-dot red"></span>
+            <span class="visual-title">Dependency State Engine</span>
+          </div>
+          <div class="auth-visual-flow">
+            <div class="visual-node node-done">
+              <span class="node-icon">✓</span>
+              <span class="node-label">Database Schema</span>
+            </div>
+            <div class="visual-arrow active">➔</div>
+            <div class="visual-node node-ready">
+              <span class="node-icon">⚡</span>
+              <span class="node-label">Authentication</span>
+            </div>
+            <div class="visual-arrow">➔</div>
+            <div class="visual-node node-locked">
+              <span class="node-icon">🔒</span>
+              <span class="node-label">Dashboard UI</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-hero-footer">
+          <span>© 2026 FlowLock SaaS. Dependency-aware task management system.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="auth-form-pane">
+      <div class="auth-card-container">
+        
+        <div class="auth-form-header">
+          <h1 class="auth-form-title">Welcome Back</h1>
+          <p class="auth-form-subtitle">Sign in to access your dependency workspace</p>
+        </div>
+
+        <!-- Quick Demo Access Box -->
+        <div class="demo-credentials-banner">
+          <div class="demo-credentials-info">
+            <span class="demo-badge">⚡ QUICK DEMO ACCESS</span>
+            <p>Click below to sign in instantly with full workspace access.</p>
+          </div>
+          <button id="quickDemoBtn" type="button" class="btn btn-secondary btn-demo-quick">
+            🔑 Continue with Demo Account
+          </button>
+        </div>
+
+        <form id="loginForm" class="auth-form-main">
+          
+          <div class="form-group">
+            <label for="loginEmail" class="form-label">Email Address</label>
+            <input 
+              type="email" 
+              id="loginEmail" 
+              class="form-input" 
+              placeholder="name@company.com" 
+              value="demo@flowlock.app" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label for="loginPassword" class="form-label">Password</label>
+            </div>
+            <input 
+              type="password" 
+              id="loginPassword" 
+              class="form-input" 
+              placeholder="••••••••" 
+              value="flowlock123" 
+              required
+            >
+          </div>
+
+          <div class="form-options">
+            <label class="form-checkbox-label">
+              <input type="checkbox" id="rememberMe" checked>
+              <span>Remember me for 30 days</span>
+            </label>
+          </div>
+
+          <div id="loginError" class="form-error-banner" style="display: none;"></div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn">
+            Sign In to Workspace ➔
+          </button>
+        </form>
+
+        <div class="auth-form-footer">
+          <p>Don't have an account? <a href="signup.html" class="auth-link">Create account</a></p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { checkAuthGuard, loginUser } from './js/auth.js';
+    import { showToast } from './js/utils.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auth Guard for login page
+      checkAuthGuard('login');
+
+      const form = document.getElementById('loginForm');
+      const errorEl = document.getElementById('loginError');
+      const quickDemoBtn = document.getElementById('quickDemoBtn');
+
+      function handleLoginSubmit(email, password) {
+        const result = loginUser(email, password);
+        if (result.success) {
+          window.location.href = 'dashboard.html';
+        } else {
+          errorEl.textContent = result.message;
+          errorEl.style.display = 'block';
+          errorEl.classList.add('active');
+        }
+      }
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        errorEl.style.display = 'none';
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        handleLoginSubmit(email, password);
+      });
+
+      if (quickDemoBtn) {
+        quickDemoBtn.addEventListener('click', () => {
+          handleLoginSubmit('demo@flowlock.app', 'flowlock123');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
