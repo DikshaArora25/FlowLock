@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock — Workspace Activity Log</title>
+  <meta name="description" content="View real-time workspace activity, lock recalculations, and status transitions.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Nav -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <a href="dashboard.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+          <span class="sidebar-logo">🔒</span>
+          <span class="sidebar-title">FlowLock</span>
+        </a>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item">
+          <span class="nav-icon">📁</span>
+          <span>Workspace</span>
+        </a>
+        <a href="tasks.html" class="sidebar-nav-item">
+          <span class="nav-icon">✓</span>
+          <span>Tasks</span>
+        </a>
+        <a href="dashboard.html#inspector" class="sidebar-nav-item">
+          <span class="nav-icon">🔗</span>
+          <span>Dependencies</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item">
+          <span class="nav-icon">👤</span>
+          <span>Profile</span>
+        </a>
+        <a href="activity.html" class="sidebar-nav-item active">
+          <span class="nav-icon">📜</span>
+          <span>Activity</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button id="themeToggleBtn" class="sidebar-footer-btn" title="Toggle Light/Dark Theme">
+          <span class="nav-icon">🌙</span>
+          <span>Theme</span>
+        </button>
+        <button id="sidebarLogoutBtn" class="sidebar-logout-btn">
+          <span class="nav-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="content-layout">
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-left">
+          <span class="workspace-title">Real-Time Workspace Audit Trail</span>
+        </div>
+
+        <div class="header-right">
+          <a href="profile.html" class="user-profile" title="Open Profile">
+            <div class="user-avatar" id="headerUserAvatar">D</div>
+            <span id="userName" class="user-name">User</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Container -->
+      <main class="main-container" style="max-width: 800px; margin: 24px auto 0 auto;">
+        
+        <div class="activity-page-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md);">
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 24px;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);">Workspace Activity Timeline</h2>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Audit trail tracking task state changes, lock recalculations, and system events.</p>
+            </div>
+            <button id="clearActivityBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">Clear History</button>
+          </div>
+
+          <div id="fullActivityList" class="activity-timeline-container">
+            <!-- Dynamically populated -->
+          </div>
+
+        </div>
+
+      </main>
+
+      <footer class="footer">
+        FlowLock — Dependencies decide what moves next.
+      </footer>
+    </div>
+  </div>
+
+  <script type="module">
+    import { checkAuthGuard, logoutUser } from './js/auth.js';
+    import { taskManager } from './js/taskManager.js';
+    import { escapeHtml } from './js/utils.js';
+    import { loadPreferences, savePreferences } from './js/storage.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auth Guard
+      const user = checkAuthGuard('activity');
+      if (user) {
+        document.getElementById('userName').textContent = user.name || 'User';
+        document.getElementById('headerUserAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+      }
+
+      // Theme toggle
+      const prefs = loadPreferences();
+      if (prefs.theme) {
+        document.documentElement.setAttribute('data-theme', prefs.theme);
+        const themeBtn = document.getElementById('themeToggleBtn');
+        if (themeBtn) themeBtn.textContent = prefs.theme === 'dark' ? '🌙' : '☀️';
+      }
+
+      const themeBtn = document.getElementById('themeToggleBtn');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const current = document.documentElement.getAttribute('data-theme') || 'dark';
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          savePreferences({ theme: next });
+          themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
+      }
+
+      const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+      if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
+
+      function renderActivityTimeline() {
+        const activities = taskManager.getRecentActivities(50);
+        const container = document.getElementById('fullActivityList');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (activities.length === 0) {
+          container.innerHTML = `
+            <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px;">
+              📜 No activity logged yet. Move or edit tasks on the Kanban board to trigger event logs.
+            </div>
+          `;
+          return;
+        }
+
+        activities.forEach(act => {
+          let icon = 'ℹ️';
+          let typeClass = 'act-info';
+
+          if (act.type === 'move') { icon = '➔'; typeClass = 'act-move'; }
+          else if (act.type === 'unlock') { icon = '⚡'; typeClass = 'act-unlock'; }
+          else if (act.type === 'blocked') { icon = '🔒'; typeClass = 'act-blocked'; }
+          else if (act.type === 'add') { icon = '➕'; typeClass = 'act-add'; }
+          else if (act.type === 'edit') { icon = '✏️'; typeClass = 'act-edit'; }
+          else if (act.type === 'delete') { icon = '🗑️'; typeClass = 'act-delete'; }
+
+          const item = document.createElement('div');
+          item.className = `activity-timeline-item ${typeClass}`;
+          item.innerHTML = `
+            <div class="act-item-icon">${icon}</div>
+            <div class="act-item-content">
+              <span class="act-item-text">${escapeHtml(act.text)}</span>
+              <span class="act-item-time">${act.timestamp || 'Just now'}</span>
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      }
+
+      renderActivityTimeline();
+
+      const clearBtn = document.getElementById('clearActivityBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          taskManager.activities = [];
+          renderActivityTimeline();
+        });
+      }
+
+    });
+  </script>
+</body>
+</html>
