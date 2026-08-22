@@ -146,8 +146,8 @@
       const errorEl = document.getElementById('loginError');
       const quickDemoBtn = document.getElementById('quickDemoBtn');
 
-      function handleLoginSubmit(email, password) {
-        const result = loginUser(email, password);
+      async function handleLoginSubmit(email, password) {
+        const result = await loginUser(email, password);
         if (result.success) {
           window.location.href = 'dashboard.html';
         } else {
@@ -157,7 +157,7 @@
         }
       }
 
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async(e) => {
         e.preventDefault();
         errorEl.style.display = 'none';
         const email = document.getElementById('loginEmail').value;
