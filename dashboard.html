@@ -55,20 +55,32 @@
       <!-- Top Header -->
       <header class="header">
         <div class="header-left">
-          <span class="workspace-title">Project Workspace</span>
+          <span class="workspace-title">FlowLock Workspace</span>
         </div>
 
         <div class="header-right">
           <!-- Search box -->
           <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search tasks, assignees...">
+            <input
+  type="text"
+  id="searchInput"
+  class="search-input"
+  placeholder="Search tasks, assignees, or dependencies..."
+  aria-label="Search tasks, assignees, or dependencies"
+>
           </div>
           
           <!-- Quick Add Button -->
-          <button id="addTaskBtn" class="btn btn-primary" style="padding: 7px 14px; font-size: 12px;">
-            ➕ Quick Add
-          </button>
+         <button
+  id="addTaskBtn"
+  class="btn btn-primary"
+  style="padding: 7px 14px; font-size: 12px;"
+  title="Create a new task"
+  aria-label="Create a new task"
+>
+  ➕ Quick Add
+</button>
 
           <!-- User Profile Direct Navigation -->
           <a href="profile.html" id="profileLink" class="user-profile" style="cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px; text-decoration: none; transition: var(--transition);" title="Open Profile Page">
@@ -87,7 +99,7 @@
             <span style="font-size: 20px;">⚡</span>
             <div>
               <h3 class="demo-title">Dependency Engine: ACTIVE</h3>
-              <p class="demo-subtitle">Quick Actions & Dependency Simulation Suite</p>
+<p class="demo-subtitle">Monitor dependencies, task locks, and workflow state</p>
             </div>
           </div>
 
@@ -98,11 +110,10 @@
             <button id="demoShowChainBtn" class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;">🔍 Inspect Graph</button>
           </div>
         </section>
-
         <!-- Metrics Cards Grid -->
-        <section id="metricsGrid" class="metrics-grid">
-          <!-- Dynamic rendering via ui.js -->
-        </section>
+<section id="metricsGrid" class="metrics-grid">
+    <!-- Dynamic rendering via ui.js -->
+</section>
 
         <!-- Toolbar Controls -->
         <section class="toolbar">
@@ -316,6 +327,7 @@
   </div>
 
   <!-- App Main Bundle Module -->
+   
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
