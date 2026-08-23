@@ -15,10 +15,43 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
     errors.title = 'Task title must be at least 3 characters.';
   }
 
+  // Duplicate title validation
+if (formData.title && formData.title.trim() !== '') {
+    const normalizedTitle = formData.title.trim().toLowerCase();
+
+    const duplicateTask = existingTasks.find(task => {
+        const sameTitle =
+            task.title &&
+            task.title.trim().toLowerCase() === normalizedTitle;
+
+        const isDifferentTask =
+            !currentTaskId || task.id !== currentTaskId;
+
+        return sameTitle && isDifferentTask;
+    });
+
+    if (duplicateTask) {
+        errors.title = 'A task with this title already exists.';
+    }
+}
+
   // Description validation
   if (!formData.description || formData.description.trim() === '') {
     errors.description = 'Description is required.';
   }
+
+  // Due date validation
+if (formData.dueDate) {
+    const selectedDate = new Date(formData.dueDate);
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+        errors.dueDate = 'Due date cannot be in the past.';
+    }
+}
 
   // Dependency validation (Self-dependency, Duplicate, Circular dependency)
   if (Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
