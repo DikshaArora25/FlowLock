@@ -249,11 +249,16 @@ const initModalListeners = () => {
 
       // Validate
       const validation = validateTaskForm(formData, taskId, taskManager.getAllTasks());
-      if (!validation.isValid) {
-        renderFormErrors(taskForm, validation.errors);
-        showToast('Please fix the errors highlighted in the form.', 'error');
-        return;
-      }
+     if (!validation.isValid) {
+    renderFormErrors(taskForm, validation.errors);
+
+    const firstErrorField = Object.keys(validation.errors)[0];
+    const firstErrorMessage = validation.errors[firstErrorField];
+
+    showToast(firstErrorMessage, 'error');
+
+    return;
+}
 
       let result;
       if (taskId) {

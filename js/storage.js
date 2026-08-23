@@ -3,6 +3,7 @@
  */
 
 const STORAGE_KEYS = {
+  USERS: 'flowlock_users_v1',
   TASKS: 'flowlock_tasks_v1',
   PREFERENCES: 'flowlock_prefs_v1',
   ACTIVITY_LOG: 'flowlock_activity_v1',
@@ -96,6 +97,36 @@ export const getSessionUser = () => {
 
 export const clearSessionUser = () => {
   sessionStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+};
+
+// User account persistence
+export const loadUsers = () => {
+  try {
+    const jsonString = localStorage.getItem(STORAGE_KEYS.USERS);
+
+    if (!jsonString) {
+      return [];
+    }
+
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error('Error loading users from LocalStorage:', error);
+    return [];
+  }
+};
+
+export const saveUsers = (users) => {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.USERS,
+      JSON.stringify(users)
+    );
+
+    return true;
+  } catch (error) {
+    console.error('Error saving users to LocalStorage:', error);
+    return false;
+  }
 };
 
 // Export Board as JSON File Download
