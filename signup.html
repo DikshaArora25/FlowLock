@@ -61,7 +61,7 @@
           <p class="auth-form-subtitle">Get started with dependency-aware project management</p>
         </div>
 
-        <form id="signupForm" class="auth-form-main">
+        <form id="signupForm" class="auth-form-main" action="javascript:void(0);" onsubmit="return false;">
           
           <div class="form-group">
             <label for="signupName" class="form-label">Full Name *</label>
@@ -69,7 +69,7 @@
               type="text" 
               id="signupName" 
               class="form-input" 
-              placeholder="e.g., Diksha Arora" 
+              placeholder="e.g., Alex Developer" 
               required
             >
           </div>
@@ -109,7 +109,7 @@
 
           <div id="signupError" class="form-error-banner" style="display: none;"></div>
 
-          <button type="submit" class="btn btn-primary auth-submit-btn">
+          <button id="signupSubmitBtn" type="submit" class="btn btn-primary auth-submit-btn">
             Create Account & Launch Workspace ➔
           </button>
         </form>
@@ -126,16 +126,23 @@
   <script type="module">
     import { checkAuthGuard, signupUser } from './js/auth.js';
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function initSignup() {
       // Auth Guard for signup page
       checkAuthGuard('signup');
 
       const form = document.getElementById('signupForm');
       const errorEl = document.getElementById('signupError');
 
+      if (!form) return;
+
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        errorEl.style.display = 'none';
+        e.stopPropagation();
+
+        if (errorEl) {
+          errorEl.style.display = 'none';
+          errorEl.textContent = '';
+        }
 
         const name = document.getElementById('signupName').value;
         const email = document.getElementById('signupEmail').value;
@@ -147,12 +154,21 @@
         if (result.success) {
           window.location.href = 'dashboard.html';
         } else {
-          errorEl.textContent = result.message;
-          errorEl.style.display = 'block';
-          errorEl.classList.add('active');
+          if (errorEl) {
+            errorEl.textContent = result.message;
+            errorEl.style.display = 'block';
+            errorEl.classList.add('active');
+          }
         }
+        return false;
       });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSignup);
+    } else {
+      initSignup();
+    }
   </script>
 </body>
 </html>

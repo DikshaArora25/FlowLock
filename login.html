@@ -83,7 +83,7 @@
           </button>
         </div>
 
-        <form id="loginForm" class="auth-form-main">
+        <form id="loginForm" class="auth-form-main" action="javascript:void(0);" onsubmit="return false;">
           
           <div class="form-group">
             <label for="loginEmail" class="form-label">Email Address</label>
@@ -92,7 +92,6 @@
               id="loginEmail" 
               class="form-input" 
               placeholder="name@company.com" 
-              value="demo@flowlock.app" 
               required
             >
           </div>
@@ -106,7 +105,6 @@
               id="loginPassword" 
               class="form-input" 
               placeholder="••••••••" 
-              value="flowlock123" 
               required
             >
           </div>
@@ -120,7 +118,7 @@
 
           <div id="loginError" class="form-error-banner" style="display: none;"></div>
 
-          <button type="submit" class="btn btn-primary auth-submit-btn">
+          <button id="loginSubmitBtn" type="submit" class="btn btn-primary auth-submit-btn">
             Sign In to Workspace ➔
           </button>
         </form>
@@ -136,9 +134,8 @@
 
   <script type="module">
     import { checkAuthGuard, loginUser } from './js/auth.js';
-    import { showToast } from './js/utils.js';
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function initLogin() {
       // Auth Guard for login page
       checkAuthGuard('login');
 
@@ -151,26 +148,39 @@
         if (result.success) {
           window.location.href = 'dashboard.html';
         } else {
-          errorEl.textContent = result.message;
-          errorEl.style.display = 'block';
-          errorEl.classList.add('active');
+          if (errorEl) {
+            errorEl.textContent = result.message;
+            errorEl.style.display = 'block';
+            errorEl.classList.add('active');
+          }
         }
       }
 
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        errorEl.style.display = 'none';
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        handleLoginSubmit(email, password);
-      });
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (errorEl) errorEl.style.display = 'none';
+
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+          handleLoginSubmit(email, password);
+          return false;
+        });
+      }
 
       if (quickDemoBtn) {
         quickDemoBtn.addEventListener('click', () => {
           handleLoginSubmit('demo@flowlock.app', 'flowlock123');
         });
       }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLogin);
+    } else {
+      initLogin();
+    }
   </script>
 </body>
 </html>

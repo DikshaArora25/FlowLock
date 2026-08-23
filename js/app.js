@@ -31,7 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = checkAuthGuard('dashboard');
   if (user) {
     const el = document.getElementById('userName');
-    if (el) el.textContent = user.name || 'Diksha';
+    if (el) el.textContent = user.name || 'User';
+    const avatarEl = document.querySelector('.user-avatar');
+    if (avatarEl) avatarEl.textContent = (user.name || 'U').charAt(0).toUpperCase();
   }
 
   // 2. Load saved theme preference
@@ -55,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+
+  const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+  if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
 });
 
 // ─── Full UI Refresh ──────────────────────────────────────────────────────────

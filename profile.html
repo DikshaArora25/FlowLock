@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlowLock - User Profile</title>
-  <meta name="description" content="FlowLock User Profile and Session Details">
+  <title>FlowLock — User Profile</title>
+  <meta name="description" content="FlowLock User Profile and Account Settings">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +15,10 @@
     <!-- Sidebar Nav -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">🔒</span>
-        <span class="sidebar-title">FlowLock</span>
+        <a href="landing.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;" title="FlowLock Home (Landing Page)">
+          <span class="sidebar-logo">🔒</span>
+          <span class="sidebar-title">FlowLock</span>
+        </a>
       </div>
       
       <nav class="sidebar-nav">
@@ -24,9 +26,21 @@
           <span class="nav-icon">📁</span>
           <span>Workspace</span>
         </a>
+        <a href="tasks.html" class="sidebar-nav-item">
+          <span class="nav-icon">✓</span>
+          <span>Tasks</span>
+        </a>
+        <a href="dashboard.html#inspector" class="sidebar-nav-item">
+          <span class="nav-icon">🔗</span>
+          <span>Dependencies</span>
+        </a>
         <a href="profile.html" class="sidebar-nav-item active">
           <span class="nav-icon">👤</span>
           <span>Profile</span>
+        </a>
+        <a href="activity.html" class="sidebar-nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Activity</span>
         </a>
       </nav>
 
@@ -50,13 +64,13 @@
           <a href="dashboard.html" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
             ← Back to Workspace
           </a>
-          <span class="workspace-title">Profile</span>
+          <span class="workspace-title">User Account & Profile</span>
         </div>
 
         <div class="header-right">
           <div class="user-profile" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;">
-            <div class="user-avatar">D</div>
-            <span id="userNameHeader" class="user-name" style="font-size: 13px; font-weight: 600;">Diksha</span>
+            <div class="user-avatar" id="avatarHeader">U</div>
+            <span id="userNameHeader" class="user-name" style="font-size: 13px; font-weight: 600;">User</span>
           </div>
         </div>
       </header>
@@ -66,43 +80,43 @@
         <div class="profile-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md);">
           
           <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px;">
-            <div class="user-avatar" style="width: 60px; height: 60px; font-size: 24px; background: var(--accent-primary);">D</div>
+            <div class="user-avatar" id="profileBigAvatar" style="width: 60px; height: 60px; font-size: 24px; background: var(--accent-primary);">U</div>
             <div>
-              <h2 id="profileName" style="font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">DIKSHA</h2>
+              <h2 id="profileName" style="font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">USER NAME</h2>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                 <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-done);"></span>
-                <span style="font-size: 13px; color: var(--status-done); font-weight: 600;">● Active</span>
+                <span style="font-size: 13px; color: var(--status-done); font-weight: 600;">● Active Member</span>
               </div>
             </div>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 18px;">
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Email</span>
-              <span id="profileEmail" style="font-size: 14px; color: var(--text-main); font-weight: 500;">demo@flowlock.app</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Email Address</span>
+              <span id="profileEmail" style="font-size: 14px; color: var(--text-main); font-weight: 500;">user@flowlock.app</span>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Role</span>
-              <span id="profileRole" style="font-size: 14px; color: var(--text-main); font-weight: 500;">Lead Engineer</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Workspace Role</span>
+              <span id="profileRole" style="font-size: 14px; color: var(--text-main); font-weight: 500;">Software Engineer</span>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Account Status</span>
-              <span style="font-size: 14px; color: var(--status-done); font-weight: 600;">Active</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Member Since</span>
+              <span id="profileMemberSince" style="font-size: 14px; color: var(--text-main); font-weight: 500;">2026-08-01</span>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Session</span>
-              <span style="font-size: 14px; color: var(--text-main); font-weight: 500;">Authenticated</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Session Security</span>
+              <span style="font-size: 14px; color: var(--status-done); font-weight: 600;">Authenticated Session</span>
             </div>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 24px;">
-            <a href="dashboard.html" class="btn btn-secondary" style="text-decoration: none;">
-              ← Back to Workspace
-            </a>
-            <button id="logoutBtn" class="btn btn-danger">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 24px; flex-wrap: wrap; gap: 12px;">
+            <button id="editProfileBtn" class="btn btn-primary" style="font-size: 13px;">
+              ✏️ Edit Profile
+            </button>
+            <button id="logoutBtn" class="btn btn-danger" style="font-size: 13px;">
               🚪 Logout
             </button>
           </div>
@@ -116,18 +130,56 @@
     </div>
   </div>
 
+  <!-- EDIT PROFILE MODAL -->
+  <div id="editProfileModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Profile Details</h3>
+        <button type="button" class="btn-icon btn-close-modal">✕</button>
+      </div>
+
+      <form id="editProfileForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="editNameInput">Full Name *</label>
+            <input type="text" id="editNameInput" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editRoleInput">Role / Job Title *</label>
+            <input type="text" id="editRoleInput" class="form-input" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { checkAuthGuard, logoutUser } from './js/auth.js';
-    import { loadPreferences, savePreferences } from './js/storage.js';
+    import { loadPreferences, savePreferences, updateUserInStorage } from './js/storage.js';
+    import { showToast } from './js/utils.js';
 
     document.addEventListener('DOMContentLoaded', () => {
       // Auth Guard for profile page
       const user = checkAuthGuard('profile');
       if (user) {
-        document.getElementById('profileName').textContent = (user.name || 'DIKSHA').toUpperCase();
-        document.getElementById('userNameHeader').textContent = user.name || 'Diksha';
-        document.getElementById('profileEmail').textContent = user.email || 'demo@flowlock.app';
-        document.getElementById('profileRole').textContent = user.role || 'Lead Engineer';
+        updateProfileUI(user);
+      }
+
+      function updateProfileUI(u) {
+        const firstLetter = (u.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('profileName').textContent = (u.name || 'USER').toUpperCase();
+        document.getElementById('userNameHeader').textContent = u.name || 'User';
+        document.getElementById('avatarHeader').textContent = firstLetter;
+        document.getElementById('profileBigAvatar').textContent = firstLetter;
+        document.getElementById('profileEmail').textContent = u.email || 'user@flowlock.app';
+        document.getElementById('profileRole').textContent = u.role || 'Software Engineer';
+        document.getElementById('profileMemberSince').textContent = u.memberSince || '2026-08-01';
       }
 
       // Theme toggle
@@ -155,6 +207,46 @@
 
       const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
       if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
+
+      // Edit Profile Modal
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      const editProfileModal = document.getElementById('editProfileModal');
+      const editProfileForm = document.getElementById('editProfileForm');
+
+      if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', () => {
+          document.getElementById('editNameInput').value = user.name || '';
+          document.getElementById('editRoleInput').value = user.role || 'Software Engineer';
+          editProfileModal.classList.add('active');
+        });
+      }
+
+      document.querySelectorAll('.btn-close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          editProfileModal.classList.remove('active');
+        });
+      });
+
+      if (editProfileForm) {
+        editProfileForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const newName = document.getElementById('editNameInput').value.trim();
+          const newRole = document.getElementById('editRoleInput').value.trim();
+
+          if (!newName || !newRole) {
+            showToast('Please fill out all fields.', 'error');
+            return;
+          }
+
+          updateUserInStorage(user.email, { name: newName, role: newRole });
+          user.name = newName;
+          user.role = newRole;
+
+          updateProfileUI(user);
+          editProfileModal.classList.remove('active');
+          showToast('✓ Profile updated successfully!', 'success');
+        });
+      }
     });
   </script>
 </body>

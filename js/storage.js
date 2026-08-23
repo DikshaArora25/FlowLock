@@ -6,7 +6,8 @@ const STORAGE_KEYS = {
   TASKS: 'flowlock_tasks_v1',
   PREFERENCES: 'flowlock_prefs_v1',
   ACTIVITY_LOG: 'flowlock_activity_v1',
-  SESSION_USER: 'flowlock_session_user'
+  SESSION_USER: 'flowlock_session_user',
+  REGISTERED_USERS: 'flowlock_users_v1'
 };
 
 // Save tasks collection to LocalStorage
@@ -76,10 +77,12 @@ export const loadActivityLog = () => {
   }
 };
 
-// Session Storage for Demo Auth
+// Session Storage for Demo & Registered Auth
 export const saveSessionUser = (userObject) => {
   try {
-    sessionStorage.setItem(STORAGE_KEYS.SESSION_USER, JSON.stringify(userObject));
+    const str = JSON.stringify(userObject);
+    sessionStorage.setItem(STORAGE_KEYS.SESSION_USER, str);
+    localStorage.setItem(STORAGE_KEYS.SESSION_USER, str);
   } catch (error) {
     console.error('Error saving session user:', error);
   }
@@ -87,7 +90,7 @@ export const saveSessionUser = (userObject) => {
 
 export const getSessionUser = () => {
   try {
-    const jsonString = sessionStorage.getItem(STORAGE_KEYS.SESSION_USER);
+    const jsonString = sessionStorage.getItem(STORAGE_KEYS.SESSION_USER) || localStorage.getItem(STORAGE_KEYS.SESSION_USER);
     return jsonString ? JSON.parse(jsonString) : null;
   } catch (error) {
     return null;
@@ -96,6 +99,48 @@ export const getSessionUser = () => {
 
 export const clearSessionUser = () => {
   sessionStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+  localStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+};
+
+// Registered Users in LocalStorage
+export const getRegisteredUsers = () => {
+  try {
+    const jsonString = localStorage.getItem(STORAGE_KEYS.REGISTERED_USERS);
+    return jsonString ? JSON.parse(jsonString) : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+export const saveRegisteredUser = (user) => {
+  try {
+    const users = getRegisteredUsers();
+    users.push(user);
+    localStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(users));
+    return true;
+  } catch (error) {
+    console.error('Error saving registered user:', error);
+    return false;
+  }
+};
+
+export const updateUserInStorage = (email, updatedFields) => {
+  try {
+    const users = getRegisteredUsers();
+    const index = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+    if (index !== -1) {
+      users[index] = { ...users[index], ...updatedFields };
+      localStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(users));
+    }
+    const session = getSessionUser();
+    if (session && session.email.toLowerCase() === email.toLowerCase()) {
+      saveSessionUser({ ...session, ...updatedFields });
+    }
+    return true;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return false;
+  }
 };
 
 // Export Board as JSON File Download
