@@ -12,7 +12,6 @@
 </head>
 <body>
   <div class="app-layout">
-    <!-- Sidebar Nav -->
     <aside class="sidebar">
       <div class="sidebar-brand">
         <a href="landing.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;" title="FlowLock Home (Landing Page)">
@@ -56,9 +55,7 @@
       </div>
     </aside>
 
-    <!-- Main Content Layout -->
     <div class="content-layout">
-      <!-- Top Header -->
       <header class="header">
         <div class="header-left">
           <span class="workspace-title">Real-Time Workspace Audit Trail</span>
@@ -72,7 +69,6 @@
         </div>
       </header>
 
-      <!-- Main Container -->
       <main class="main-container" style="max-width: 800px; margin: 24px auto 0 auto;">
         
         <div class="activity-page-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md);">
@@ -85,9 +81,7 @@
             <button id="clearActivityBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">Clear History</button>
           </div>
 
-          <div id="fullActivityList" class="activity-timeline-container">
-            <!-- Dynamically populated -->
-          </div>
+          <div id="fullActivityList" class="activity-timeline-container"></div>
 
         </div>
 
@@ -113,7 +107,6 @@
         document.getElementById('headerUserAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
       }
 
-      // Theme toggle
       const prefs = loadPreferences();
       if (prefs.theme) {
         document.documentElement.setAttribute('data-theme', prefs.theme);

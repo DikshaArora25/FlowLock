@@ -130,7 +130,6 @@
       suiteContainer.appendChild(row);
     }
 
-    // ─── SUITE 1: Directed Acyclic Graph & Cycle Detection ────────────────────────
     const suite1 = createSuite('DAG & Cycle Detection');
 
     const sampleTasks = [
@@ -140,23 +139,18 @@
       { id: 't4', title: 'Task 4', status: 'Todo', dependsOn: ['t2', 't3'] }
     ];
 
-    // Self dependency
     const selfCycle = detectCycle('t1', 't1', sampleTasks);
     assert(suite1, 'Rejects self-dependency (A → A)', selfCycle.hasCycle === true);
 
-    // Direct 2-node cycle: t1 depending on t3 (t3 -> t2 -> t1)
     const directCycle = detectCycle('t1', 't3', sampleTasks);
     assert(suite1, 'Detects multi-hop cycle (t1 depends on t3 where t3 depends on t2 -> t1)', directCycle.hasCycle === true);
 
-    // Valid non-cyclic dependency
     const validEdge = detectCycle('t3', 't1', sampleTasks);
     assert(suite1, 'Permits valid non-cyclic forward edge (t3 -> t1)', validEdge.hasCycle === false);
 
-    // Multi-dependency array detection
     const multiCycle = detectCycle('t1', ['t2', 't3'], sampleTasks);
     assert(suite1, 'Detects cycle in multi-dependency array ([t2, t3])', multiCycle.hasCycle === true);
 
-    // DAG Diamond (Valid)
     const diamondTasks = [
       { id: 'A', title: 'A', status: 'Done', dependsOn: [] },
       { id: 'B', title: 'B', status: 'Done', dependsOn: ['A'] },
@@ -166,7 +160,6 @@
     const diamondCheck = detectCycle('D', ['B', 'C'], diamondTasks);
     assert(suite1, 'Validates DAG diamond multi-parent structure without false positives', diamondCheck.hasCycle === false);
 
-    // ─── SUITE 2: Lock Calculation & Anti-Cheat Validation ────────────────────────
     const suite2 = createSuite('Lock Calculation & Anti-Cheat Rules');
 
     const lockTasks = [
@@ -181,20 +174,17 @@
     assert(suite2, 'Task with In Progress dependency IS locked', isTaskLocked(lockTasks[3], lockTasks) === true);
     assert(suite2, 'Task with mixed Done & In Progress dependencies IS locked', isTaskLocked(lockTasks[4], lockTasks) === true);
 
-    // Anti-cheat move rejection
     const moveAttempt = canMoveTask(lockTasks[3], 'In Progress', lockTasks);
     assert(suite2, 'canMoveTask rejects moving a locked task to In Progress', moveAttempt.allowed === false);
 
     const readyMove = canMoveTask(lockTasks[2], 'In Progress', lockTasks);
     assert(suite2, 'canMoveTask permits moving an unblocked task to In Progress', readyMove.allowed === true);
 
-    // Lock propagation
     const updatedTasks = lockTasks.map(t => t.id === 'dep2' ? { ...t, status: 'Done' } : t);
     const propResult = propagateDependencyState(updatedTasks, 'dep2');
     const taskBAfterProp = propResult.tasks.find(t => t.id === 'taskB');
     assert(suite2, 'Lock propagation unlocks downstream dependents when prerequisite completes', taskBAfterProp.locked === false);
 
-    // ─── SUITE 3: Date Utilities & Timezone Parsing ──────────────────────────────
     const suite3 = createSuite('Date Utilities & Timezone Offset Safety');
 
     const parsed = parseLocalDate('2026-08-24');
@@ -208,7 +198,6 @@
     const remaining = getDaysRemaining('2026-08-24');
     assert(suite3, 'getDaysRemaining computes integer day diff without NaN', typeof remaining === 'number' && !isNaN(remaining));
 
-    // ─── SUITE 4: Validation & Auth Rules ───────────────────────────────────────
     const suite4 = createSuite('Validation & Auth Rules');
 
     assert(suite4, 'isValidEmail accepts valid email (user@test.com)', isValidEmail('user@test.com') === true);
@@ -216,7 +205,6 @@
     assert(suite4, 'isValidPassword enforces length & character variety', isValidPassword('Pass123!@') === true);
     assert(suite4, 'isValidPassword rejects weak passwords (simple)', isValidPassword('simple') === false);
 
-    // Form validation allows metadata edits on completed tasks
     const completedTask = { id: 'done-1', title: 'Done Task', status: 'Done', dependsOn: ['dep2'] };
     const validEdit = validateTaskForm(
       { title: 'Done Task Edited', description: 'New description', priority: 'High', status: 'Done', dependsOn: ['dep2'] },
@@ -225,7 +213,6 @@
     );
     assert(suite4, 'validateTaskForm allows editing metadata on completed task without rejecting status', validEdit.isValid === true);
 
-    // ─── SUITE 5: PBKDF2 Cryptography & Session Management ──────────────────────
     const suite5 = createSuite('PBKDF2 Cryptography & Session Engine');
 
     const testPassword = 'SecretPass123!@';
@@ -238,14 +225,12 @@
     const isMismatch = await verifyPassword('WrongPassword123!', hash);
     assert(suite5, 'verifyPassword returns false for incorrect candidate password', isMismatch === false);
 
-    // Password strength calculation
     const weakStrength = calculatePasswordStrength('pass');
     assert(suite5, 'calculatePasswordStrength identifies weak password', weakStrength.label === 'Weak' && weakStrength.score < 3);
 
     const strongStrength = calculatePasswordStrength('StrongP@ssw0rd!');
     assert(suite5, 'calculatePasswordStrength identifies strong password meeting all criteria', strongStrength.label === 'Strong' && strongStrength.score === 5);
 
-    // ─── Summary ────────────────────────────────────────────────────────────────
     const summaryEl = document.getElementById('summaryStats');
     summaryEl.innerHTML = `
       <span style="color: var(--status-done);">Passed: ${passedTests}</span>

@@ -12,7 +12,6 @@
 </head>
 <body>
   <div class="app-layout">
-    <!-- Sidebar Nav -->
     <aside class="sidebar">
       <div class="sidebar-brand">
         <a href="landing.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;" title="FlowLock Home (Landing Page)">
@@ -56,9 +55,7 @@
       </div>
     </aside>
 
-    <!-- Main Content Layout -->
     <div class="content-layout">
-      <!-- Top Header -->
       <header class="header">
         <div class="header-left">
           <span class="workspace-title">Task Management View</span>
@@ -81,10 +78,8 @@
         </div>
       </header>
 
-      <!-- Main Container -->
       <main class="main-container">
         
-        <!-- Controls Toolbar -->
         <section class="toolbar">
           <div class="toolbar-left">
             <select id="filterSelect" class="filter-select">
@@ -111,10 +106,7 @@
           </div>
         </section>
 
-        <!-- Tasks Table / Grid View -->
-        <section id="tasksGrid" class="tasks-table-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-          <!-- Dynamically populated tasks -->
-        </section>
+        <section id="tasksGrid" class="tasks-table-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;"></section>
 
       </main>
 
@@ -124,7 +116,6 @@
     </div>
   </div>
 
-  <!-- TASK EDIT / CREATE MODAL -->
   <div id="taskModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
@@ -184,9 +175,7 @@
 
           <div class="form-group">
             <label class="form-label">Prerequisite Dependencies (Depends On)</label>
-            <div id="dependencyCheckboxes" class="dependency-select-box">
-              <!-- Dynamically populated checkboxes -->
-            </div>
+            <div id="dependencyCheckboxes" class="dependency-select-box"></div>
             <div id="error-dependsOn" class="form-error"></div>
           </div>
         </div>
@@ -215,7 +204,6 @@
         document.getElementById('headerUserAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
       }
 
-      // Theme toggle
       const prefs = loadPreferences();
       if (prefs.theme) {
         document.documentElement.setAttribute('data-theme', prefs.theme);

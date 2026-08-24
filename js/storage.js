@@ -1,7 +1,3 @@
-/**
- * FlowLock Storage Module
- */
-
 const STORAGE_KEYS = {
   USERS: 'flowlock_users_v1',
   TASKS: 'flowlock_tasks_v1',
@@ -34,12 +30,10 @@ export const loadTasks = () => {
   }
 };
 
-// Clear saved tasks
 export const clearTasks = () => {
   localStorage.removeItem(STORAGE_KEYS.TASKS);
 };
 
-// Preferences (Theme, View mode, active board)
 export const savePreferences = (prefs) => {
   try {
     const currentPrefs = loadPreferences() || {};
@@ -59,7 +53,6 @@ export const loadPreferences = () => {
   }
 };
 
-// Activity Log persistence
 export const saveActivityLog = (activities) => {
   try {
     localStorage.setItem(STORAGE_KEYS.ACTIVITY_LOG, JSON.stringify(activities.slice(0, 50)));
@@ -77,7 +70,7 @@ export const loadActivityLog = () => {
   }
 };
 
-// Session Storage & Persistent Auth State
+// Session Storage & Persistent Auth State (LocalStorage for Remember Me)
 export const saveSessionUser = (userObject, rememberMe = false) => {
   try {
     const jsonStr = JSON.stringify(userObject);
@@ -126,7 +119,6 @@ export const clearSessionUser = () => {
   }
 };
 
-// User account persistence
 export const loadUsers = () => {
   try {
     const jsonString = localStorage.getItem(STORAGE_KEYS.USERS);
@@ -156,7 +148,6 @@ export const saveUsers = (users) => {
   }
 };
 
-// Export Board as JSON File Download
 export const exportBoardAsJSON = (tasks) => {
   const exportData = {
     appName: 'FlowLock',
@@ -179,7 +170,6 @@ export const exportBoardAsJSON = (tasks) => {
   URL.revokeObjectURL(url);
 };
 
-// Import Board from JSON string with schema validation
 export const parseAndValidateImportedJSON = (jsonString) => {
   try {
     const data = JSON.parse(jsonString);
@@ -193,7 +183,6 @@ export const parseAndValidateImportedJSON = (jsonString) => {
       throw new Error('Invalid JSON format: Must be an array of tasks or export payload.');
     }
 
-    // Validate essential properties on each task
     const validatedTasks = tasksToValidate.map((task, index) => {
       if (!task.title || typeof task.title !== 'string') {
         throw new Error(`Task at index ${index} missing valid title.`);
@@ -212,6 +201,7 @@ export const parseAndValidateImportedJSON = (jsonString) => {
         updatedAt: task.updatedAt || new Date().toISOString()
       };
     });
+
     // Prune orphan dependency IDs that do not exist in the imported dataset & avoid self-dependencies
     const validIds = new Set(validatedTasks.map(t => t.id));
     validatedTasks.forEach(t => {

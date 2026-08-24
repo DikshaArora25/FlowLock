@@ -1,12 +1,7 @@
-/**
- * FlowLock UI Rendering & Component Module
- */
-
 import { escapeHtml, formatDate } from './utils.js';
 import { getBlockingDependencies } from './dependencyEngine.js';
 import { getCurrentUser } from './auth.js';
 
-// Render Dynamic Summary Metrics Header
 export const renderMetrics = (metrics) => {
   const container = document.getElementById('metricsGrid');
   if (!container) return;
@@ -45,7 +40,6 @@ export const renderMetrics = (metrics) => {
   `;
 };
 
-// Render Single Task Card Element
 export const createTaskCardElement = (task, allTasks) => {
   const card = document.createElement('div');
   card.className = `task-card ${task.locked ? 'is-locked' : ''}`;
@@ -53,7 +47,6 @@ export const createTaskCardElement = (task, allTasks) => {
   card.dataset.taskId = task.id;
   card.draggable = true;
 
-  // Determine lock badge & dependency details
   const depCount = Array.isArray(task.dependsOn) ? task.dependsOn.length : 0;
   const blocking = task.locked ? getBlockingDependencies(task, allTasks) : [];
   const blockingNames = blocking.map(b => b.title).join(', ');
@@ -99,7 +92,6 @@ export const createTaskCardElement = (task, allTasks) => {
   return card;
 };
 
-// Render Complete 4-Column Kanban Board
 export const renderKanbanBoard = (tasks, allTasks) => {
   const columns = {
     'Backlog': document.getElementById('list-Backlog'),
@@ -108,17 +100,14 @@ export const renderKanbanBoard = (tasks, allTasks) => {
     'Done': document.getElementById('list-Done')
   };
 
-  // Clear existing task items
   Object.keys(columns).forEach(status => {
     if (columns[status]) {
       columns[status].innerHTML = '';
     }
   });
 
-  // Count per column
   const counts = { 'Backlog': 0, 'Todo': 0, 'In Progress': 0, 'Done': 0 };
 
-  // Append cards using DOM manipulation
   tasks.forEach(task => {
     const listEl = columns[task.status];
     if (listEl) {
@@ -128,7 +117,6 @@ export const renderKanbanBoard = (tasks, allTasks) => {
     }
   });
 
-  // Update header column count badges
   Object.keys(counts).forEach(status => {
     const badge = document.getElementById(`count-${status.replace(/\s+/g, '')}`);
     if (badge) {
@@ -136,7 +124,6 @@ export const renderKanbanBoard = (tasks, allTasks) => {
     }
   });
 
-  // Render empty states for columns with 0 tasks
   Object.keys(columns).forEach(status => {
     const listEl = columns[status];
     if (listEl && counts[status] === 0) {
@@ -167,7 +154,6 @@ export const renderKanbanBoard = (tasks, allTasks) => {
   });
 };
 
-// Render Dependency Inspector Visual Graph Modal
 export const renderDependencyInspector = (task, allTasks) => {
   const modalTitle = document.getElementById('inspectorModalTitle');
   const modalBody = document.getElementById('inspectorModalBody');
@@ -177,7 +163,6 @@ export const renderDependencyInspector = (task, allTasks) => {
 
   const taskMap = new Map(allTasks.map(t => [t.id, t]));
   
-  // Helpers to check status
   const getTaskState = (t) => {
     if (t.status === 'Done') return { text: 'DONE', class: 'done', icon: '🟢' };
     if (t.locked) return { text: 'BLOCKED', class: 'blocking', icon: '🔒' };
@@ -187,7 +172,6 @@ export const renderDependencyInspector = (task, allTasks) => {
 
   let html = `<div class="inspector-wrapper" style="display: flex; flex-direction: column; gap: 20px;">`;
 
-  // --- SECTION 1: DEPENDS ON ---
   html += `<div>
     <h4 style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
       🔗 DEPENDS ON (Prerequisites)
@@ -239,7 +223,6 @@ export const renderDependencyInspector = (task, allTasks) => {
   }
   html += `</div></div>`;
 
-  // --- SECTION 2: CURRENT TARGET ---
   const currentStat = getTaskState(task);
   html += `
     <div style="margin: 10px 0; text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -258,7 +241,6 @@ export const renderDependencyInspector = (task, allTasks) => {
     </div>
   `;
 
-  // --- SECTION 3: BLOCKS (Dependents) ---
   const dependents = allTasks.filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(task.id));
   html += `<div>
     <h4 style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
@@ -293,11 +275,10 @@ export const renderDependencyInspector = (task, allTasks) => {
   }
   html += `</div></div>`;
 
-  html += `</div>`; // Close wrapper
+  html += `</div>`;
   modalBody.innerHTML = html;
 };
 
-// Populate Task Form for Add or Edit
 export const populateTaskForm = (task = null, allTasks = []) => {
   const form = document.getElementById('taskForm');
   if (!form) return;
@@ -344,7 +325,6 @@ export const populateTaskForm = (task = null, allTasks = []) => {
   }
 };
 
-// Render Activity Log Entries
 export const renderActivityLog = (activities) => {
   const container = document.getElementById('activityList');
   if (!container) return;

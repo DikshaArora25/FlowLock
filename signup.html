@@ -14,7 +14,6 @@
 
   <div class="auth-split-layout">
     
-    <!-- Left Hero Branding Section -->
     <div class="auth-hero-pane">
       <div class="auth-hero-content">
         <a href="landing.html" class="auth-hero-logo">
@@ -52,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Right Form Section -->
     <div class="auth-form-pane">
       <div class="auth-card-container">
         
@@ -117,7 +115,6 @@
               </button>
             </div>
 
-            <!-- Real-time Password Strength Meter -->
             <div id="passwordStrengthContainer" class="password-strength-container" style="display: none;">
               <div class="strength-header">
                 <span style="color: var(--text-dim);">Strength:</span>
@@ -199,7 +196,6 @@
       const strengthLabel = document.getElementById('strengthLabel');
       const strengthBarFill = document.getElementById('strengthBarFill');
 
-      // Toggles
       if (toggleSignupPw) {
         toggleSignupPw.addEventListener('click', () => {
           const isPw = passwordInput.type === 'password';

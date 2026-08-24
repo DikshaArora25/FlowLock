@@ -1,8 +1,3 @@
-/**
- * FlowLock — Production-Grade Authentication Engine
- * Pure Vanilla JavaScript · Web Crypto API (PBKDF2 with Salt) · Session Token Lifecycle
- */
-
 import {
   saveSessionUser,
   getSessionUser,
@@ -10,10 +5,6 @@ import {
   loadUsers,
   saveUsers
 } from './storage.js';
-
-/* ==========================================================================
-   CONSTANTS & DEMO CREDENTIALS
-   ========================================================================== */
 
 export const DEMO_USER = {
   email: 'demo@flowlock.app',
@@ -25,10 +16,6 @@ export const DEMO_USER = {
 const PBKDF2_ITERATIONS = 100000;
 const PROTECTED_PAGES = ['dashboard', 'tasks', 'activity', 'profile'];
 const GUEST_PAGES = ['login', 'signup', 'index'];
-
-/* ==========================================================================
-   CRYPTOGRAPHIC UTILITIES (PBKDF2 WITH SALT)
-   ========================================================================== */
 
 // Convert Uint8Array buffer to hex string
 const bufferToHex = (buffer) => {
@@ -104,10 +91,6 @@ export const verifyPassword = async (candidatePassword, storedHash) => {
   return computedHex === storedHash;
 };
 
-/* ==========================================================================
-   VALIDATION & PASSWORD STRENGTH ENGINE
-   ========================================================================== */
-
 export const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -142,7 +125,7 @@ export const calculatePasswordStrength = (password) => {
   const metCount = Object.values(criteria).filter(Boolean).length;
   let label = 'Weak';
   let percent = (metCount / 5) * 100;
-  let color = '#ef4444'; // Red
+  let color = '#ef4444';
 
   if (metCount <= 2) {
     label = 'Weak';
@@ -160,10 +143,6 @@ export const calculatePasswordStrength = (password) => {
 
   return { score: metCount, label, percent, color, criteria };
 };
-
-/* ==========================================================================
-   USER REGISTRATION & LOGIN
-   ========================================================================== */
 
 const generateUserId = () => {
   if (crypto.randomUUID) {
@@ -279,7 +258,6 @@ export const loginUser = async (email, password, rememberMe = false) => {
     return { success: true, user: userSession };
   }
 
-  // Load stored users
   const users = loadUsers();
   const user = users.find(u => u.email === cleanEmail);
 
@@ -314,10 +292,6 @@ export const loginUser = async (email, password, rememberMe = false) => {
   saveSessionUser(userSession, rememberMe);
   return { success: true, user: userSession };
 };
-
-/* ==========================================================================
-   PROFILE & ACCOUNT MANAGEMENT
-   ========================================================================== */
 
 export const updateUserProfile = ({ name, role }) => {
   const current = getSessionUser();
@@ -364,7 +338,6 @@ export const changeUserPassword = async ({ currentPassword, newPassword, confirm
     };
   }
 
-  // Demo user handling
   if (current.id === 'demo-user') {
     if (currentPassword !== DEMO_USER.password) {
       return { success: false, message: 'Current password does not match demo credentials.' };
@@ -390,10 +363,6 @@ export const changeUserPassword = async ({ currentPassword, newPassword, confirm
 
   return { success: true, message: 'Password updated successfully!' };
 };
-
-/* ==========================================================================
-   ROUTE GUARDS & SESSION LIFECYCLE
-   ========================================================================== */
 
 export const checkAuthGuard = (currentPage) => {
   const session = getSessionUser();
