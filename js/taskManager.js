@@ -194,13 +194,12 @@ class TaskManager {
   }
 
   addTask(taskData) {
-    if (Array.isArray(taskData.dependsOn)) {
+    const dependsOn = Array.isArray(taskData.dependsOn) ? [...taskData.dependsOn] : [];
+    if (dependsOn.length > 0) {
       const tempId = generateId();
-      for (const depId of taskData.dependsOn) {
-        const cycleCheck = detectCycle(tempId, depId, this.tasks);
-        if (cycleCheck.hasCycle) {
-          return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}` };
-        }
+      const cycleCheck = detectCycle(tempId, dependsOn, this.tasks);
+      if (cycleCheck.hasCycle) {
+        return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}` };
       }
     }
 
@@ -212,7 +211,7 @@ class TaskManager {
       priority: taskData.priority || 'Medium',
       assignee: taskData.assignee ? taskData.assignee.trim() : 'Unassigned',
       dueDate: taskData.dueDate || '',
-      dependsOn: Array.isArray(taskData.dependsOn) ? [...taskData.dependsOn] : [],
+      dependsOn: dependsOn,
       locked: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -234,14 +233,12 @@ class TaskManager {
     const currentTask = this.tasks[taskIndex];
 
     if (updatedFields.dependsOn && Array.isArray(updatedFields.dependsOn)) {
-      for (const depId of updatedFields.dependsOn) {
-        if (depId === taskId) {
-          return { success: false, message: 'A task cannot depend on itself.' };
-        }
-        const cycleCheck = detectCycle(taskId, depId, this.tasks);
-        if (cycleCheck.hasCycle) {
-          return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}` };
-        }
+      if (updatedFields.dependsOn.includes(taskId)) {
+        return { success: false, message: 'A task cannot depend on itself.' };
+      }
+      const cycleCheck = detectCycle(taskId, updatedFields.dependsOn, this.tasks);
+      if (cycleCheck.hasCycle) {
+        return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}` };
       }
     }
 
@@ -406,6 +403,11 @@ class TaskManager {
 
   getRecentActivities(limit = 20) {
     return this.activities.slice(0, limit);
+  }
+
+  clearActivities() {
+    this.activities = [];
+    saveActivityLog([]);
   }
 }
 

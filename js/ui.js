@@ -4,6 +4,7 @@
 
 import { escapeHtml, formatDate } from './utils.js';
 import { getBlockingDependencies } from './dependencyEngine.js';
+import { getCurrentUser } from './auth.js';
 
 // Render Dynamic Summary Metrics Header
 export const renderMetrics = (metrics) => {
@@ -80,18 +81,18 @@ export const createTaskCardElement = (task, allTasks) => {
     ` : ''}
 
     <div class="card-meta">
-      <span class="card-priority ${priorityClass}">⚡ ${escapeHtml(task.priority)}</span>
+      <span class="card-priority ${escapeHtml(priorityClass)}">⚡ ${escapeHtml(task.priority)}</span>
       <span class="card-assignee">👤 ${escapeHtml(task.assignee)}</span>
     </div>
 
     <div class="card-meta" style="padding-top: 4px; border: none;">
-      <span style="font-size: 10px;">📅 ${formatDate(task.dueDate)}</span>
+      <span style="font-size: 10px;">📅 ${escapeHtml(formatDate(task.dueDate))}</span>
     </div>
 
     <div class="card-actions">
-      <button class="card-btn btn-inspect" data-id="${task.id}" title="View Dependency Inspector">🔍 Inspect Graph</button>
-      <button class="card-btn btn-edit" data-id="${task.id}" title="Edit Task">✏️ Edit</button>
-      <button class="card-btn btn-delete" data-id="${task.id}" title="Delete Task">🗑️ Delete</button>
+      <button class="card-btn btn-inspect" data-id="${escapeHtml(task.id)}" title="View Dependency Inspector">🔍 Inspect Graph</button>
+      <button class="card-btn btn-edit" data-id="${escapeHtml(task.id)}" title="Edit Task">✏️ Edit</button>
+      <button class="card-btn btn-delete" data-id="${escapeHtml(task.id)}" title="Delete Task">🗑️ Delete</button>
     </div>
   `;
 
@@ -310,10 +311,13 @@ export const populateTaskForm = (task = null, allTasks = []) => {
     submitBtn.textContent = task ? 'Save Changes' : 'Create Task';
   }
 
+  const currentUser = getCurrentUser();
+  const defaultAssignee = currentUser && currentUser.name ? currentUser.name : 'Unassigned';
+
   document.getElementById('taskTitle').value = task ? task.title : '';
   document.getElementById('taskDescription').value = task ? task.description : '';
   document.getElementById('taskPriority').value = task ? task.priority : 'Medium';
-  document.getElementById('taskAssignee').value = task ? task.assignee : 'Diksha';
+  document.getElementById('taskAssignee').value = task ? task.assignee : defaultAssignee;
   document.getElementById('taskDueDate').value = task ? task.dueDate : '';
   document.getElementById('taskStatus').value = task ? task.status : 'Todo';
 

@@ -14,67 +14,82 @@
  * @returns {Object} { hasCycle: boolean, cycleChain: Array<string> }
  */
 export const detectCycle = (targetTaskId, proposedDependencyId, tasks) => {
+  // Normalize proposedDependencyId to array of dependency IDs
+  const proposedDeps = Array.isArray(proposedDependencyId) ? proposedDependencyId : [proposedDependencyId];
+
   // Build lookup map for fast task retrieval
   const taskMap = new Map(tasks.map(t => [t.id, t]));
 
-  // Self dependency check
-  if (targetTaskId === proposedDependencyId) {
-    const task = taskMap.get(targetTaskId);
-    return {
-      hasCycle: true,
-      cycleChain: [task ? task.title : targetTaskId, task ? task.title : targetTaskId]
-    };
+  // 1. Check direct self dependency
+  for (const depId of proposedDeps) {
+    if (targetTaskId === depId) {
+      const task = taskMap.get(targetTaskId);
+      const name = task ? task.title : targetTaskId;
+      return {
+        hasCycle: true,
+        cycleChain: [name, name]
+      };
+    }
   }
 
-  // Create temporary adjacency graph reflecting the proposed edge
-  // Edge direction: Task X -> depends on Y (X requires Y to be done)
-  // Path search: If proposedDependencyId can already reach targetTaskId, adding targetTaskId -> proposedDependencyId creates a cycle!
-  const visited = new Set();
-  const path = [];
-
-  const dfs = (currentId) => {
-    visited.add(currentId);
-    path.push(currentId);
-
-    if (currentId === targetTaskId) {
-      return true; // Reached targetTaskId! Cycle detected!
+  // Helper to get dependencies of a task under the proposed changes
+  const getDeps = (taskId) => {
+    if (taskId === targetTaskId) {
+      return proposedDeps;
     }
-
-    const currentTask = taskMap.get(currentId);
-    if (currentTask && Array.isArray(currentTask.dependsOn)) {
-      for (const depId of currentTask.dependsOn) {
-        if (!visited.has(depId)) {
-          if (dfs(depId)) return true;
-        }
-      }
-    }
-
-    path.pop();
-    return false;
+    const t = taskMap.get(taskId);
+    return t && Array.isArray(t.dependsOn) ? t.dependsOn : [];
   };
 
-  // Check if starting from proposedDependencyId leads back to targetTaskId
-  const hasCycle = dfs(proposedDependencyId);
+  // 2. Check if starting from any proposed dependency leads back to targetTaskId
+  for (const depId of proposedDeps) {
+    const visited = new Set();
+    const path = [];
 
-  let cycleChainTitles = [];
-  if (hasCycle) {
-    // Add targetTaskId to complete cycle representation in output
-    const fullPathIds = [targetTaskId, ...path];
-    cycleChainTitles = fullPathIds.map(id => {
-      const t = taskMap.get(id);
-      return t ? t.title : id;
-    });
+    const dfs = (currentId) => {
+      visited.add(currentId);
+      path.push(currentId);
+
+      if (currentId === targetTaskId) {
+        return true; // Cycle detected: targetTaskId -> depId -> ... -> targetTaskId
+      }
+
+      const nextDeps = getDeps(currentId);
+      for (const nextId of nextDeps) {
+        if (!visited.has(nextId)) {
+          if (dfs(nextId)) return true;
+        } else if (path.includes(nextId) && nextId === targetTaskId) {
+          path.push(nextId);
+          return true;
+        }
+      }
+
+      path.pop();
+      return false;
+    };
+
+    if (dfs(depId)) {
+      const fullPathIds = [targetTaskId, ...path];
+      const cycleChainTitles = fullPathIds.map(id => {
+        const t = taskMap.get(id);
+        return t ? t.title : id;
+      });
+      return {
+        hasCycle: true,
+        cycleChain: cycleChainTitles
+      };
+    }
   }
 
   return {
-    hasCycle,
-    cycleChain: cycleChainTitles
+    hasCycle: false,
+    cycleChain: []
   };
 };
 
 /**
  * Checks if a task is locked.
- * A task is locked if ANY of its dependencies have a status other than 'Done'.
+ * A task is locked if ANY of its valid dependencies have a status other than 'Done'.
  */
 export const isTaskLocked = (task, tasks) => {
   if (!task || !Array.isArray(task.dependsOn) || task.dependsOn.length === 0) {
@@ -85,8 +100,8 @@ export const isTaskLocked = (task, tasks) => {
 
   for (const depId of task.dependsOn) {
     const depTask = taskMap.get(depId);
-    // If dependency doesn't exist or is not Done, task is locked
-    if (!depTask || depTask.status !== 'Done') {
+    // If dependency exists and is not Done, task is locked
+    if (depTask && depTask.status !== 'Done') {
       return true;
     }
   }
@@ -105,8 +120,8 @@ export const getBlockingDependencies = (task, tasks) => {
 
   for (const depId of task.dependsOn) {
     const depTask = taskMap.get(depId);
-    if (!depTask || depTask.status !== 'Done') {
-      blocking.push(depTask || { id: depId, title: `Unknown Task (${depId})`, status: 'Missing' });
+    if (depTask && depTask.status !== 'Done') {
+      blocking.push(depTask);
     }
   }
 
