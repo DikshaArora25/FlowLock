@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock — Automated Logic Verification Suite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--bg-primary);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+    }
+    .test-header {
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+    .test-suite {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .suite-title {
+      background: var(--bg-card);
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .test-results-list {
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .test-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      font-size: 13px;
+    }
+    .test-pass {
+      border-left: 4px solid var(--status-done);
+    }
+    .test-fail {
+      border-left: 4px solid var(--status-locked);
+    }
+    .status-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .tag-pass { background: rgba(16, 185, 129, 0.15); color: var(--status-done); }
+    .tag-fail { background: rgba(239, 68, 68, 0.15); color: var(--status-locked); }
+    .summary-badge {
+      display: inline-flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <h1>🔒 FlowLock Logic Verification Suite</h1>
+    <p style="color: var(--text-muted); margin-top: 6px;">Automated assertions for Graph Algorithms, Lock State Propagation, Date Utilities, Validation & Auth Guards.</p>
+    <div id="summaryStats" class="summary-badge">Running tests...</div>
+  </div>
+
+  <div id="testOutput"></div>
+
+  <script type="module">
+    import { detectCycle, isTaskLocked, getBlockingDependencies, recalculateLocks, canMoveTask, propagateDependencyState } from './js/dependencyEngine.js';
+    import { parseLocalDate, formatDate, getDaysRemaining } from './js/utils.js';
+    import { isValidEmail, isValidPassword, checkAuthGuard, hashPassword, verifyPassword, calculatePasswordStrength } from './js/auth.js';
+    import { validateTaskForm } from './js/validation.js';
+
+    let totalTests = 0;
+    let passedTests = 0;
+    let failedTests = 0;
+
+    const testOutput = document.getElementById('testOutput');
+
+    function createSuite(suiteName) {
+      const suiteEl = document.createElement('div');
+      suiteEl.className = 'test-suite';
+      suiteEl.innerHTML = `
+        <div class="suite-title">
+          <span>${suiteName}</span>
+          <span class="suite-count" id="count-${suiteName.replace(/\s+/g, '')}"></span>
+        </div>
+        <div class="test-results-list" id="list-${suiteName.replace(/\s+/g, '')}"></div>
+      `;
+      testOutput.appendChild(suiteEl);
+      return document.getElementById(`list-${suiteName.replace(/\s+/g, '')}`);
+    }
+
+    function assert(suiteContainer, testName, condition, details = '') {
+      totalTests++;
+      const row = document.createElement('div');
+      row.className = `test-row ${condition ? 'test-pass' : 'test-fail'}`;
+      if (condition) {
+        passedTests++;
+        row.innerHTML = `
+          <span>✓ ${testName}</span>
+          <span class="status-tag tag-pass">PASS</span>
+        `;
+      } else {
+        failedTests++;
+        row.innerHTML = `
+          <span>✕ ${testName} <small style="color: var(--status-locked); display: block;">${details}</small></span>
+          <span class="status-tag tag-fail">FAIL</span>
+        `;
+      }
+      suiteContainer.appendChild(row);
+    }
+
+    // ─── SUITE 1: Directed Acyclic Graph & Cycle Detection ────────────────────────
+    const suite1 = createSuite('DAG & Cycle Detection');
+
+    const sampleTasks = [
+      { id: 't1', title: 'Task 1', status: 'Done', dependsOn: [] },
+      { id: 't2', title: 'Task 2', status: 'In Progress', dependsOn: ['t1'] },
+      { id: 't3', title: 'Task 3', status: 'Todo', dependsOn: ['t2'] },
+      { id: 't4', title: 'Task 4', status: 'Todo', dependsOn: ['t2', 't3'] }
+    ];
+
+    // Self dependency
+    const selfCycle = detectCycle('t1', 't1', sampleTasks);
+    assert(suite1, 'Rejects self-dependency (A → A)', selfCycle.hasCycle === true);
+
+    // Direct 2-node cycle: t1 depending on t3 (t3 -> t2 -> t1)
+    const directCycle = detectCycle('t1', 't3', sampleTasks);
+    assert(suite1, 'Detects multi-hop cycle (t1 depends on t3 where t3 depends on t2 -> t1)', directCycle.hasCycle === true);
+
+    // Valid non-cyclic dependency
+    const validEdge = detectCycle('t3', 't1', sampleTasks);
+    assert(suite1, 'Permits valid non-cyclic forward edge (t3 -> t1)', validEdge.hasCycle === false);
+
+    // Multi-dependency array detection
+    const multiCycle = detectCycle('t1', ['t2', 't3'], sampleTasks);
+    assert(suite1, 'Detects cycle in multi-dependency array ([t2, t3])', multiCycle.hasCycle === true);
+
+    // DAG Diamond (Valid)
+    const diamondTasks = [
+      { id: 'A', title: 'A', status: 'Done', dependsOn: [] },
+      { id: 'B', title: 'B', status: 'Done', dependsOn: ['A'] },
+      { id: 'C', title: 'C', status: 'Done', dependsOn: ['A'] },
+      { id: 'D', title: 'D', status: 'Todo', dependsOn: ['B', 'C'] }
+    ];
+    const diamondCheck = detectCycle('D', ['B', 'C'], diamondTasks);
+    assert(suite1, 'Validates DAG diamond multi-parent structure without false positives', diamondCheck.hasCycle === false);
+
+    // ─── SUITE 2: Lock Calculation & Anti-Cheat Validation ────────────────────────
+    const suite2 = createSuite('Lock Calculation & Anti-Cheat Rules');
+
+    const lockTasks = [
+      { id: 'dep1', title: 'Prereq 1', status: 'Done', dependsOn: [], locked: false },
+      { id: 'dep2', title: 'Prereq 2', status: 'In Progress', dependsOn: [], locked: false },
+      { id: 'taskA', title: 'Task A', status: 'Todo', dependsOn: ['dep1'], locked: false },
+      { id: 'taskB', title: 'Task B', status: 'Todo', dependsOn: ['dep2'], locked: true },
+      { id: 'taskC', title: 'Task C', status: 'Todo', dependsOn: ['dep1', 'dep2'], locked: true }
+    ];
+
+    assert(suite2, 'Task with all Done dependencies is NOT locked', isTaskLocked(lockTasks[2], lockTasks) === false);
+    assert(suite2, 'Task with In Progress dependency IS locked', isTaskLocked(lockTasks[3], lockTasks) === true);
+    assert(suite2, 'Task with mixed Done & In Progress dependencies IS locked', isTaskLocked(lockTasks[4], lockTasks) === true);
+
+    // Anti-cheat move rejection
+    const moveAttempt = canMoveTask(lockTasks[3], 'In Progress', lockTasks);
+    assert(suite2, 'canMoveTask rejects moving a locked task to In Progress', moveAttempt.allowed === false);
+
+    const readyMove = canMoveTask(lockTasks[2], 'In Progress', lockTasks);
+    assert(suite2, 'canMoveTask permits moving an unblocked task to In Progress', readyMove.allowed === true);
+
+    // Lock propagation
+    const updatedTasks = lockTasks.map(t => t.id === 'dep2' ? { ...t, status: 'Done' } : t);
+    const propResult = propagateDependencyState(updatedTasks, 'dep2');
+    const taskBAfterProp = propResult.tasks.find(t => t.id === 'taskB');
+    assert(suite2, 'Lock propagation unlocks downstream dependents when prerequisite completes', taskBAfterProp.locked === false);
+
+    // ─── SUITE 3: Date Utilities & Timezone Parsing ──────────────────────────────
+    const suite3 = createSuite('Date Utilities & Timezone Offset Safety');
+
+    const parsed = parseLocalDate('2026-08-24');
+    assert(suite3, 'parseLocalDate parses YYYY-MM-DD into local date matching year, month, day', 
+      parsed.getFullYear() === 2026 && parsed.getMonth() === 7 && parsed.getDate() === 24
+    );
+
+    const formatted = formatDate('2026-08-24');
+    assert(suite3, 'formatDate produces expected string', formatted.includes('Aug') && formatted.includes('2026'));
+
+    const remaining = getDaysRemaining('2026-08-24');
+    assert(suite3, 'getDaysRemaining computes integer day diff without NaN', typeof remaining === 'number' && !isNaN(remaining));
+
+    // ─── SUITE 4: Validation & Auth Rules ───────────────────────────────────────
+    const suite4 = createSuite('Validation & Auth Rules');
+
+    assert(suite4, 'isValidEmail accepts valid email (user@test.com)', isValidEmail('user@test.com') === true);
+    assert(suite4, 'isValidEmail rejects invalid email (user@)', isValidEmail('user@') === false);
+    assert(suite4, 'isValidPassword enforces length & character variety', isValidPassword('Pass123!@') === true);
+    assert(suite4, 'isValidPassword rejects weak passwords (simple)', isValidPassword('simple') === false);
+
+    // Form validation allows metadata edits on completed tasks
+    const completedTask = { id: 'done-1', title: 'Done Task', status: 'Done', dependsOn: ['dep2'] };
+    const validEdit = validateTaskForm(
+      { title: 'Done Task Edited', description: 'New description', priority: 'High', status: 'Done', dependsOn: ['dep2'] },
+      'done-1',
+      lockTasks
+    );
+    assert(suite4, 'validateTaskForm allows editing metadata on completed task without rejecting status', validEdit.isValid === true);
+
+    // ─── SUITE 5: PBKDF2 Cryptography & Session Management ──────────────────────
+    const suite5 = createSuite('PBKDF2 Cryptography & Session Engine');
+
+    const testPassword = 'SecretPass123!@';
+    const hash = await hashPassword(testPassword);
+    assert(suite5, 'hashPassword generates formatted salt:hash string using PBKDF2', hash.includes(':') && hash.split(':')[0].length === 32);
+
+    const isMatch = await verifyPassword(testPassword, hash);
+    assert(suite5, 'verifyPassword returns true for correct candidate password', isMatch === true);
+
+    const isMismatch = await verifyPassword('WrongPassword123!', hash);
+    assert(suite5, 'verifyPassword returns false for incorrect candidate password', isMismatch === false);
+
+    // Password strength calculation
+    const weakStrength = calculatePasswordStrength('pass');
+    assert(suite5, 'calculatePasswordStrength identifies weak password', weakStrength.label === 'Weak' && weakStrength.score < 3);
+
+    const strongStrength = calculatePasswordStrength('StrongP@ssw0rd!');
+    assert(suite5, 'calculatePasswordStrength identifies strong password meeting all criteria', strongStrength.label === 'Strong' && strongStrength.score === 5);
+
+    // ─── Summary ────────────────────────────────────────────────────────────────
+    const summaryEl = document.getElementById('summaryStats');
+    summaryEl.innerHTML = `
+      <span style="color: var(--status-done);">Passed: ${passedTests}</span>
+      <span style="color: ${failedTests > 0 ? 'var(--status-locked)' : 'var(--text-muted)'};">Failed: ${failedTests}</span>
+      <span style="color: var(--text-main);">Total: ${totalTests}</span>
+    `;
+  </script>
+</body>
+</html>
