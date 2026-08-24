@@ -77,10 +77,16 @@ export const loadActivityLog = () => {
   }
 };
 
-// Session Storage for Demo Auth
-export const saveSessionUser = (userObject) => {
+// Session Storage & Persistent Auth State
+export const saveSessionUser = (userObject, rememberMe = false) => {
   try {
-    sessionStorage.setItem(STORAGE_KEYS.SESSION_USER, JSON.stringify(userObject));
+    const jsonStr = JSON.stringify(userObject);
+    sessionStorage.setItem(STORAGE_KEYS.SESSION_USER, jsonStr);
+    if (rememberMe) {
+      localStorage.setItem(STORAGE_KEYS.SESSION_USER, jsonStr);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+    }
   } catch (error) {
     console.error('Error saving session user:', error);
   }
@@ -88,15 +94,36 @@ export const saveSessionUser = (userObject) => {
 
 export const getSessionUser = () => {
   try {
-    const jsonString = sessionStorage.getItem(STORAGE_KEYS.SESSION_USER);
-    return jsonString ? JSON.parse(jsonString) : null;
+    let jsonString = sessionStorage.getItem(STORAGE_KEYS.SESSION_USER);
+    if (!jsonString) {
+      jsonString = localStorage.getItem(STORAGE_KEYS.SESSION_USER);
+      if (jsonString) {
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_USER, jsonString);
+      }
+    }
+    if (!jsonString) return null;
+
+    const user = JSON.parse(jsonString);
+    if (user && user.expiresAt) {
+      const expiry = new Date(user.expiresAt).getTime();
+      if (expiry <= Date.now()) {
+        clearSessionUser();
+        return null;
+      }
+    }
+    return user;
   } catch (error) {
     return null;
   }
 };
 
 export const clearSessionUser = () => {
-  sessionStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+  try {
+    sessionStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+    localStorage.removeItem(STORAGE_KEYS.SESSION_USER);
+  } catch (error) {
+    console.error('Error clearing session user:', error);
+  }
 };
 
 // User account persistence
@@ -184,6 +211,11 @@ export const parseAndValidateImportedJSON = (jsonString) => {
         createdAt: task.createdAt || new Date().toISOString(),
         updatedAt: task.updatedAt || new Date().toISOString()
       };
+    });
+    // Prune orphan dependency IDs that do not exist in the imported dataset & avoid self-dependencies
+    const validIds = new Set(validatedTasks.map(t => t.id));
+    validatedTasks.forEach(t => {
+      t.dependsOn = t.dependsOn.filter(depId => validIds.has(depId) && depId !== t.id);
     });
 
     return { success: true, tasks: validatedTasks };

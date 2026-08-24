@@ -3,6 +3,7 @@
  */
 
 import { detectCycle } from './dependencyEngine.js';
+import { parseLocalDate } from './utils.js';
 
 // Validate task form fields and dependency selection before submit
 export const validateTaskForm = (formData, currentTaskId = null, existingTasks = []) => {
@@ -16,7 +17,7 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
   }
 
   // Duplicate title validation
-if (formData.title && formData.title.trim() !== '') {
+  if (formData.title && formData.title.trim() !== '') {
     const normalizedTitle = formData.title.trim().toLowerCase();
 
     const duplicateTask = existingTasks.find(task => {
@@ -40,45 +41,44 @@ if (formData.title && formData.title.trim() !== '') {
     errors.description = 'Description is required.';
   }
 
-  // Due date validation
-if (formData.dueDate) {
-    const selectedDate = new Date(formData.dueDate);
-    const today = new Date();
+  // Due date validation (using local date parsing to avoid UTC offset bugs)
+  if (formData.dueDate) {
+    const selectedDate = parseLocalDate(formData.dueDate);
+    if (selectedDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
 
-    today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
-
-    if (selectedDate < today) {
+      if (selectedDate.getTime() < today.getTime()) {
         errors.dueDate = 'Due date cannot be in the past.';
+      }
     }
-}
+  }
 
   // Dependency validation (Self-dependency, Duplicate, Circular dependency)
   if (Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
     // 1. Self dependency check
     if (currentTaskId && formData.dependsOn.includes(currentTaskId)) {
       errors.dependsOn = 'A task cannot depend on itself.';
-    }
-
-    // 2. Cycle detection check
-    if (!errors.dependsOn) {
+    } else {
+      // 2. Cycle detection check
       const targetId = currentTaskId || 'temp-new-task';
-      for (const depId of formData.dependsOn) {
-        const cycleResult = detectCycle(targetId, depId, existingTasks);
-        if (cycleResult.hasCycle) {
-          errors.dependsOn = `Circular dependency detected: ${cycleResult.cycleChain.join(' → ')}`;
-          break;
-        }
+      const cycleResult = detectCycle(targetId, formData.dependsOn, existingTasks);
+      if (cycleResult.hasCycle) {
+        errors.dependsOn = `Circular dependency detected: ${cycleResult.cycleChain.join(' → ')}`;
       }
     }
   }
 
-  // Status vs Dependency validation
-  if ((formData.status === 'In Progress' || formData.status === 'Done') && Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
+  // Status vs Dependency validation: Enforce only when actively transitioning to In Progress / Done
+  const currentTask = currentTaskId ? existingTasks.find(t => t.id === currentTaskId) : null;
+  const isStatusTransition = !currentTask || currentTask.status !== formData.status;
+
+  if (isStatusTransition && (formData.status === 'In Progress' || formData.status === 'Done') && Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
     const taskMap = new Map(existingTasks.map(t => [t.id, t]));
     const hasIncompleteDep = formData.dependsOn.some(depId => {
       const dep = taskMap.get(depId);
-      return !dep || dep.status !== 'Done';
+      return dep && dep.status !== 'Done';
     });
     if (hasIncompleteDep) {
       errors.status = `Cannot set status to "${formData.status}" while prerequisite dependencies are incomplete.`;

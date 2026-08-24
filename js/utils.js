@@ -8,19 +8,35 @@ export const generateId = (prefix = 'task') => {
   return `${prefix}-${Date.now().toString(36)}-${randomStr}`;
 };
 
+// Parse a YYYY-MM-DD string into a local Date object (avoiding UTC midnight timezone offset bugs)
+export const parseLocalDate = (dateString) => {
+  if (!dateString) return null;
+  if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
+    const [year, month, day] = dateString.trim().split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const d = new Date(dateString);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 // Format date string nicely (e.g., "Aug 15, 2026")
 export const formatDate = (dateString) => {
   if (!dateString) return 'No due date';
+  const d = parseLocalDate(dateString);
+  if (!d) return 'Invalid date';
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+  return d.toLocaleDateString(undefined, options);
 };
 
 // Calculate relative days remaining
 export const getDaysRemaining = (dueDateString) => {
   if (!dueDateString) return null;
   const now = new Date();
-  const due = new Date(dueDateString);
-  const diffTime = due - now;
+  now.setHours(0, 0, 0, 0);
+  const due = parseLocalDate(dueDateString);
+  if (!due) return null;
+  due.setHours(0, 0, 0, 0);
+  const diffTime = due.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 };
