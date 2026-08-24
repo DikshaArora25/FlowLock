@@ -5,8 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FlowLock — Dependency-Aware Project Workspace</title>
-  <meta name="description"
-    content="FlowLock is a professional, dependency-aware Kanban workspace that prevents starting blocked work and clarifies bottlenecks.">
+  <meta name="description" content="FlowLock is a professional, dependency-aware Kanban workspace that understands what can move, what is blocked, and why.">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +14,7 @@
 
 <body class="landing-body">
 
-  <!-- ─── NAVBAR ──────────────────────────────────────────────────────────── -->
+  <!-- ─── 1. NAVBAR ────────────────────────────────────────────────────────── -->
   <header class="landing-nav-header">
     <div class="landing-nav-container">
       <a href="landing.html" class="landing-logo">
@@ -25,10 +24,9 @@
 
       <nav id="navLinksMenu" class="landing-nav-links">
         <a href="#product" class="nav-link">Product</a>
-        <a href="#demo" class="nav-link">See Demo</a>
         <a href="#why-flowlock" class="nav-link">Why FlowLock</a>
+        <a href="#chain" class="nav-link">Dependency Chain</a>
         <a href="#features" class="nav-link">Features</a>
-        <a href="#graph" class="nav-link">Graph</a>
         <a href="#how-it-works" class="nav-link">How It Works</a>
       </nav>
 
@@ -40,32 +38,31 @@
     </div>
   </header>
 
-  <!-- ─── HERO SECTION ────────────────────────────────────────────────────── -->
+  <!-- ─── 2. HERO SECTION ─────────────────────────────────────────────────── -->
   <section id="product" class="landing-hero-section">
     <div class="landing-container hero-grid">
 
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          <span>Dependency-Aware Project Workspace</span>
+          <span>Dependency-Aware Kanban Platform</span>
         </div>
 
         <h1 class="hero-title">
-          Your Tasks Move Forward.<br>
-          <span class="gradient-text">Your Dependencies Decide When.</span>
+          Move Work Forward.<br>
+          <span class="gradient-text">Know What Blocks It.</span>
         </h1>
 
         <p class="hero-subtitle">
-          FlowLock is a dependency-aware Kanban workspace that helps teams understand what can move forward, what is
-          blocked, and why.
+          FlowLock is a dependency-aware Kanban workspace that understands what can move, what is blocked, and why.
         </p>
 
         <div class="hero-ctas">
           <a href="signup.html" class="btn btn-primary hero-btn-main">
-            Create Your Workspace ➔
+            Get Started ➔
           </a>
-          <a href="#demo" class="btn btn-secondary hero-btn-sub">
-            Explore FlowLock
+          <a href="login.html" class="btn btn-secondary hero-btn-sub">
+            Sign In
           </a>
         </div>
 
@@ -76,7 +73,7 @@
           </div>
           <div class="hero-stat">
             <span class="stat-value">0</span>
-            <span class="stat-label">Circular Dependencies</span>
+            <span class="stat-label">Circular Loops</span>
           </div>
           <div class="hero-stat">
             <span class="stat-value">Real-Time</span>
@@ -85,7 +82,7 @@
         </div>
       </div>
 
-      <!-- Hero Miniature Kanban Preview -->
+      <!-- Interactive Hero Preview -->
       <div class="hero-preview-container">
         <div class="hero-preview-card">
           <div class="preview-header">
@@ -94,46 +91,18 @@
               <span class="dot yellow"></span>
               <span class="dot green"></span>
             </div>
-            <span class="preview-title">FlowLock Workspace Demo</span>
-            <span class="preview-status-tag">Live Engine</span>
+            <span class="preview-title">FlowLock Engine Simulation</span>
+            <button id="btnHeroResolveDep" class="hero-resolve-btn">
+              ⚡ Resolve Dependency
+            </button>
           </div>
 
-          <div class="hero-kanban-mini">
-            <div class="mini-col">
-              <div class="mini-col-header"><span class="dot backlog"></span> BACKLOG</div>
-              <div class="mini-card-item card-locked">
-                <div class="mini-item-title">Production Deployment</div>
-                <div class="mini-item-tag tag-locked">🔒 LOCKED</div>
-              </div>
-            </div>
-
-            <div class="mini-col">
-              <div class="mini-col-header"><span class="dot todo"></span> TODO</div>
-              <div class="mini-card-item card-locked">
-                <div class="mini-item-title">Dashboard Integration</div>
-                <div class="mini-item-tag tag-locked">🔒 LOCKED</div>
-              </div>
-            </div>
-
-            <div class="mini-col">
-              <div class="mini-col-header"><span class="dot in-progress"></span> IN PROGRESS</div>
-              <div class="mini-card-item card-ready">
-                <div class="mini-item-title">Authentication Service</div>
-                <div class="mini-item-tag tag-ready">⚡ READY</div>
-              </div>
-            </div>
-
-            <div class="mini-col">
-              <div class="mini-col-header"><span class="dot done"></span> DONE</div>
-              <div class="mini-card-item card-done">
-                <div class="mini-item-title">Database Schema</div>
-                <div class="mini-item-tag tag-done">✓ DONE</div>
-              </div>
-            </div>
+          <div id="heroPreviewCards" class="hero-preview-cards-list">
+            <!-- Dynamically rendered by js/landing.js -->
           </div>
 
-          <div class="hero-preview-footer">
-            <span>🔒 FlowLock prevents starting blocked work before dependencies finish.</span>
+          <div id="heroPreviewStatusLog" class="hero-preview-footer">
+            <span>🔒 Authentication is blocked waiting on Database Schema.</span>
           </div>
         </div>
       </div>
@@ -141,66 +110,22 @@
     </div>
   </section>
 
-  <!-- ─── INTERACTIVE DEPENDENCY DEMO ────────────────────────────────────── -->
-  <section id="demo" class="landing-section demo-section">
-    <div class="landing-container">
-
-      <div class="section-header text-center">
-        <span class="section-eyebrow">CORE DIFFERENTIATOR</span>
-        <h2 class="section-title">See Dependencies In Action</h2>
-        <p class="section-desc">
-          Complete a prerequisite and watch FlowLock automatically recalculate which downstream tasks are ready to move.
-        </p>
-      </div>
-
-      <div class="interactive-demo-wrapper">
-        <div class="demo-toolbar">
-          <div class="demo-toolbar-left">
-            <span class="demo-pulse">●</span>
-            <span style="font-weight: 600; font-size: 13px;">Live Algorithmic State Machine</span>
-          </div>
-          <div class="demo-toolbar-controls">
-            <button id="btnCompletePrereq" class="btn btn-secondary demo-control-btn btn-success">
-              ✓ Complete Prerequisite
-            </button>
-            <button id="btnMoveForward" class="btn btn-secondary demo-control-btn">
-              ⚡ Move Task Forward
-            </button>
-            <button id="btnResetDemo" class="btn btn-secondary demo-control-btn">
-              🔄 Reset Demo
-            </button>
-          </div>
-        </div>
-
-        <div id="interactiveDemoChain" class="demo-chain-grid">
-          <!-- Dynamically populated by js/landing.js -->
-        </div>
-
-        <div id="demoActionLog" class="demo-log-banner">
-          💡 <strong>FlowLock Engine:</strong> Task "<strong>Authentication</strong>" is READY to move!
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ─── WHY FLOWLOCK COMPARISON ────────────────────────────────────────── -->
+  <!-- ─── 3. "WHY FLOWLOCK" SECTION ───────────────────────────────────────── -->
   <section id="why-flowlock" class="landing-section why-section">
     <div class="landing-container">
 
       <div class="section-header text-center">
-        <span class="section-eyebrow">THE FLOWLOCK ADVANTAGE</span>
+        <span class="section-eyebrow">THE FLOWLOCK DIFFERENCE</span>
         <h2 class="section-title">Why Traditional Kanban Fails Software Teams</h2>
         <p class="section-desc">
-          Standard Kanban boards track column status, but fail to explain workflow blockages. FlowLock provides complete
-          context.
+          Standard Kanban boards track column status, but fail to explain workflow blockages. FlowLock provides complete constraint context.
         </p>
       </div>
 
       <div class="uvp-quote-card">
         <div class="uvp-quote-text">
           "Kanban shows where work is.<br>
-          <span class="gradient-text">FlowLock explains why work can't move.</span>"
+          <span class="gradient-text">FlowLock explains why it can't move.</span>"
         </div>
       </div>
 
@@ -213,8 +138,8 @@
           </div>
           <div class="comparison-body">
             <div class="comparison-box">
-              <span class="comp-label">Board State:</span>
-              <div class="comp-value error">Task → Blocked</div>
+              <span class="comp-label">Task Status:</span>
+              <div class="comp-value error">Deployment → Blocked</div>
             </div>
             <ul class="comparison-list">
               <li>⚠️ No explanation for why task is stuck</li>
@@ -225,7 +150,7 @@
           </div>
         </div>
 
-        <!-- FlowLock Kanban -->
+        <!-- FlowLock Workspace -->
         <div class="comparison-card flowlock-card">
           <div class="comparison-header">
             <span class="comparison-icon">🔒</span>
@@ -233,11 +158,11 @@
           </div>
           <div class="comparison-body">
             <div class="comparison-box flowlock-box">
-              <span class="comp-label">Board State:</span>
+              <span class="comp-label">Task Status:</span>
               <div class="comp-value success">
-                Task → Blocked<br>
+                Deployment → Blocked<br>
                 <span class="comp-arrow">↓</span><br>
-                Missing prerequisite: Authentication<br>
+                Blocked because: Testing is incomplete<br>
                 <span class="comp-arrow">↓</span><br>
                 <strong>Complete this first</strong>
               </div>
@@ -255,88 +180,79 @@
     </div>
   </section>
 
-  <!-- ─── CORE FEATURES GRID ─────────────────────────────────────────────── -->
+  <!-- ─── 4. INTERACTIVE DEPENDENCY CHAIN ──────────────────────────────────── -->
+  <section id="chain" class="landing-section chain-section">
+    <div class="landing-container">
+      
+      <div class="section-header text-center">
+        <span class="section-eyebrow">GRAPH TRAVERSAL</span>
+        <h2 class="section-title">See the workflow behind the workflow.</h2>
+        <p class="section-desc">
+          Click or hover any node in the dependency chain to inspect prerequisites, downstream impact, and lock states.
+        </p>
+      </div>
+
+      <div class="chain-interactive-card">
+        <div class="chain-nodes-grid" id="chainNodesGrid">
+          <!-- Dynamically populated by js/landing.js -->
+        </div>
+
+        <div id="chainDetailCard" class="chain-detail-display">
+          <!-- Dynamically populated by js/landing.js -->
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── 5. FEATURE SECTION ──────────────────────────────────────────────── -->
   <section id="features" class="landing-section features-section">
     <div class="landing-container">
 
       <div class="section-header text-center">
-        <span class="section-eyebrow">PRODUCT CAPABILITIES</span>
+        <span class="section-eyebrow">CORE CAPABILITIES</span>
         <h2 class="section-title">Built for Engineering Rigor</h2>
         <p class="section-desc">
-          Every tool software teams need to maintain clear dependency pipelines and eliminate blocked work.
+          Essential tools software teams need to maintain clear dependency pipelines and eliminate blocked work.
         </p>
       </div>
 
-      <div class="features-grid">
-
-        <div class="feature-card">
+      <div class="features-grid-6">
+        
+        <div class="feature-card-clean">
           <div class="feature-icon">🔗</div>
           <h3 class="feature-title">Dependency-Aware Tasks</h3>
-          <p class="feature-desc">Link tasks to required prerequisites. FlowLock ensures work only begins when
-            dependencies are 100% complete.</p>
+          <p class="feature-desc">Link tasks to required prerequisites so work begins only when ready.</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card-clean">
           <div class="feature-icon">⚡</div>
-          <h3 class="feature-title">Automatic Lock Propagation</h3>
-          <p class="feature-desc">Completing a prerequisite automatically evaluates the graph and unlocks downstream
-            dependent tasks in real time.</p>
+          <h3 class="feature-title">Automatic Locking</h3>
+          <p class="feature-desc">Unlocking and lock propagation downstream calculated automatically.</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card-clean">
           <div class="feature-icon">🔄</div>
           <h3 class="feature-title">Cycle Detection</h3>
-          <p class="feature-desc">Depth-First Search (DFS) validation blocks circular dependency chains before they can
-            corrupt your workflow.</p>
+          <p class="feature-desc">DFS traversal prevents circular dependency loops before they occur.</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card-clean">
           <div class="feature-icon">🖐️</div>
-          <h3 class="feature-title">Drag-and-Drop Kanban</h3>
-          <p class="feature-desc">Intuitive 4-column drag-and-drop board with anti-cheat state validation rules built
-            into column moves.</p>
+          <h3 class="feature-title">Drag & Drop</h3>
+          <p class="feature-desc">4-column Kanban board with real-time dependency validation rules.</p>
         </div>
 
-        <div class="feature-card">
+        <div class="feature-card-clean">
           <div class="feature-icon">🕸️</div>
-          <h3 class="feature-title">Dependency Graph Inspection</h3>
-          <p class="feature-desc">Visual inspector to map out your project's Directed Acyclic Graph (DAG) and spot
-            upcoming bottlenecks.</p>
+          <h3 class="feature-title">Dependency Graph</h3>
+          <p class="feature-desc">Visual inspector to trace directed acyclic graphs (DAG) & bottlenecks.</p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🔍</div>
-          <h3 class="feature-title">Task Search & Filtering</h3>
-          <p class="feature-desc">Instant filter by status, priority, locked state, or keyword search across assignees
-            and descriptions.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">📥</div>
-          <h3 class="feature-title">Import & Export</h3>
-          <p class="feature-desc">Export entire project board states to JSON for backup or share workspace schemas
-            across engineering teams.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">💾</div>
-          <h3 class="feature-title">Local Persistence</h3>
-          <p class="feature-desc">Automatic LocalStorage synchronization ensures your workspace state is preserved
-            seamlessly across sessions.</p>
-        </div>
-
-        <div class="feature-card">
+        <div class="feature-card-clean">
           <div class="feature-icon">📜</div>
           <h3 class="feature-title">Activity Tracking</h3>
-          <p class="feature-desc">Real-time audit log tracking task creation, edits, state moves, blocked attempts, and
-            lock unlocks.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3 class="feature-title">Workspace Insights</h3>
-          <p class="feature-desc">At-a-glance metrics cards displaying total completion rate, unblocked workspace
-            health, and active bottlenecks.</p>
+          <p class="feature-desc">Audit log tracking task creation, moves, blocks, and unlocks.</p>
         </div>
 
       </div>
@@ -344,164 +260,14 @@
     </div>
   </section>
 
-  <!-- ─── DEPENDENCY GRAPH INSPECTION SECTION ───────────────────────────── -->
-  <section id="graph" class="landing-section graph-section">
-    <div class="landing-container">
-
-      <div class="section-header text-center">
-        <span class="section-eyebrow">GRAPH VISUALIZATION</span>
-        <h2 class="section-title">Understand Your Project Before It Becomes a Bottleneck</h2>
-        <p class="section-desc">
-          Click or hover any node in the dependency graph to inspect prerequisites, current lock state, and next
-          available actions.
-        </p>
-      </div>
-
-      <div class="graph-interactive-card">
-        <div class="graph-layout">
-          <!-- Graph Nodes -->
-          <div class="graph-nodes-wrapper">
-            <h4
-              style="font-size: 13px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; margin-bottom: 16px;">
-              Project Directed Acyclic Graph (DAG)
-            </h4>
-            <div id="graphNodesContainer" class="graph-nodes-grid">
-              <!-- Dynamically populated by landing.js -->
-            </div>
-          </div>
-
-          <!-- Inspector Panel -->
-          <div id="graphNodeDetail" class="graph-inspector-panel">
-            <!-- Dynamically updated on node click -->
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ─── MINI KANBAN PREVIEW DEMO ───────────────────────────────────────── -->
-  <section class="landing-section mini-kanban-section">
-    <div class="landing-container">
-
-      <div class="section-header text-center">
-        <span class="section-eyebrow">LIVE WORKFLOW</span>
-        <h2 class="section-title">Interactive Kanban Board Preview</h2>
-        <p class="section-desc">
-          Try clicking locked tasks vs ready tasks to see how FlowLock enforces workflow rules.
-        </p>
-      </div>
-
-      <div class="mini-board-card">
-        <div class="mini-board-grid">
-
-          <div class="mini-column">
-            <div class="mini-column-header">
-              <span class="column-dot backlog"></span>
-              <span>Backlog</span>
-            </div>
-            <div id="miniListBacklog" class="mini-task-list"></div>
-          </div>
-
-          <div class="mini-column">
-            <div class="mini-column-header">
-              <span class="column-dot todo"></span>
-              <span>Todo</span>
-            </div>
-            <div id="miniListTodo" class="mini-task-list"></div>
-          </div>
-
-          <div class="mini-column">
-            <div class="mini-column-header">
-              <span class="column-dot in-progress"></span>
-              <span>In Progress</span>
-            </div>
-            <div id="miniListInProgress" class="mini-task-list"></div>
-          </div>
-
-          <div class="mini-column">
-            <div class="mini-column-header">
-              <span class="column-dot done"></span>
-              <span>Done</span>
-            </div>
-            <div id="miniListDone" class="mini-task-list"></div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ─── SMART PROJECT INSIGHTS ────────────────────────────────────────── -->
-  <section class="landing-section insights-section">
-    <div class="landing-container">
-
-      <div class="section-header text-center">
-        <span class="section-eyebrow">METRICS & HEALTH</span>
-        <h2 class="section-title">Smart Project Insights</h2>
-        <p class="section-desc">Real-time status overview giving lead engineers immediate visibility into project
-          health.</p>
-      </div>
-
-      <div class="insights-grid">
-        <div class="insight-card">
-          <span class="insight-number">10</span>
-          <span class="insight-label">Total Tasks</span>
-        </div>
-
-        <div class="insight-card">
-          <span class="insight-number text-done">4</span>
-          <span class="insight-label">Completed</span>
-        </div>
-
-        <div class="insight-card">
-          <span class="insight-number text-in-progress">1</span>
-          <span class="insight-label">In Progress</span>
-        </div>
-
-        <div class="insight-card">
-          <span class="insight-number text-locked">4</span>
-          <span class="insight-label">Blocked</span>
-        </div>
-
-        <div class="insight-card">
-          <span class="insight-number text-accent">40%</span>
-          <span class="insight-label">Completion Rate</span>
-        </div>
-
-        <div class="insight-card">
-          <span class="insight-number">9</span>
-          <span class="insight-label">Dependencies</span>
-        </div>
-      </div>
-
-      <!-- Health Progress Bar -->
-      <div class="insights-health-bar-container">
-        <div class="health-bar-label">
-          <span>Workspace Task Distribution</span>
-          <span>4 Done · 1 In Progress · 4 Blocked · 1 Backlog</span>
-        </div>
-        <div class="health-progress-track">
-          <div class="progress-segment done" style="width: 40%;" title="Done: 40%"></div>
-          <div class="progress-segment in-progress" style="width: 10%;" title="In Progress: 10%"></div>
-          <div class="progress-segment locked" style="width: 40%;" title="Blocked: 40%"></div>
-          <div class="progress-segment backlog" style="width: 10%;" title="Backlog: 10%"></div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ─── HOW FLOWLOCK WORKS ────────────────────────────────────────────── -->
+  <!-- ─── 6. HOW FLOWLOCK WORKS SECTION ───────────────────────────────────── -->
   <section id="how-it-works" class="landing-section how-section">
     <div class="landing-container">
 
       <div class="section-header text-center">
-        <span class="section-eyebrow">FOUR SIMPLE STEPS</span>
+        <span class="section-eyebrow">WORKFLOW STEP-BY-STEP</span>
         <h2 class="section-title">How FlowLock Works</h2>
-        <p class="section-desc">From initial requirement definition to production release without starting blocked work.
-        </p>
+        <p class="section-desc">From initial requirement definition to production release without starting blocked work.</p>
       </div>
 
       <div class="steps-grid">
@@ -521,34 +287,34 @@
         <div class="step-card">
           <div class="step-number">03</div>
           <h3 class="step-title">FlowLock Detects Constraints</h3>
-          <p class="step-desc">The algorithmic engine computes lock states and screens for circular dependency loops.
-          </p>
+          <p class="step-desc">The algorithmic engine computes lock states and screens for circular dependency loops.</p>
         </div>
 
         <div class="step-card">
           <div class="step-number">04</div>
           <h3 class="step-title">Move Work Forward</h3>
-          <p class="step-desc">Drag unblocked tasks into In Progress and Done. Upstream completion unlocks downstream
-            work automatically.</p>
+          <p class="step-desc">Drag unblocked tasks into In Progress and Done. Upstream completion unlocks downstream work automatically.</p>
         </div>
-
       </div>
 
     </div>
   </section>
 
-  <!-- ─── FINAL CTA ──────────────────────────────────────────────────────── -->
+  <!-- ─── 7. FINAL CTA SECTION ────────────────────────────────────────────── -->
   <section class="landing-section final-cta-section">
     <div class="landing-container text-center">
 
       <div class="final-cta-card">
-        <h2 class="final-cta-title">Know what is blocking your project.</h2>
+        <h2 class="final-cta-title">Stop guessing what is blocking your project.</h2>
         <p class="final-cta-subtitle">
-          Create tasks, connect dependencies, and move the work that is actually ready.
+          Connect dependencies. Understand constraints. Move work forward.
         </p>
         <div class="final-cta-actions">
           <a href="signup.html" class="btn btn-primary btn-large">
-            Open FlowLock Workspace ➔
+            Start with FlowLock ➔
+          </a>
+          <a href="login.html" class="btn btn-secondary btn-large">
+            Sign In
           </a>
         </div>
       </div>
@@ -556,14 +322,14 @@
     </div>
   </section>
 
-  <!-- ─── FOOTER ─────────────────────────────────────────────────────────── -->
+  <!-- ─── 8. FOOTER ──────────────────────────────────────────────────────── -->
   <footer class="landing-footer">
     <div class="landing-container footer-content">
       <div class="footer-brand">
-        <div class="landing-logo">
+        <a href="landing.html" class="landing-logo">
           <span class="landing-logo-icon">🔒</span>
           <span class="landing-logo-text">FlowLock</span>
-        </div>
+        </a>
         <p class="footer-tagline">Dependencies decide what moves next. Designed for software engineering teams.</p>
       </div>
 
@@ -571,14 +337,13 @@
         <div class="footer-col">
           <h4>Product</h4>
           <a href="#product">Workspace</a>
-          <a href="#demo">Interactive Demo</a>
-          <a href="#graph">Graph Engine</a>
+          <a href="#chain">Dependency Chain</a>
+          <a href="#features">Features</a>
         </div>
         <div class="footer-col">
-          <h4>Features</h4>
-          <a href="#features">Dependency Engine</a>
-          <a href="#features">Cycle Detection</a>
-          <a href="#features">Import & Export</a>
+          <h4>Capabilities</h4>
+          <a href="#why-flowlock">Why FlowLock</a>
+          <a href="#how-it-works">How It Works</a>
         </div>
         <div class="footer-col">
           <h4>Account</h4>
