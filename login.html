@@ -101,14 +101,19 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <label for="loginPassword" class="form-label">Password</label>
             </div>
-            <input 
-              type="password" 
-              id="loginPassword" 
-              class="form-input" 
-              placeholder="••••••••" 
-              value="flowlock123" 
-              required
-            >
+            <div class="password-input-group">
+              <input 
+                type="password" 
+                id="loginPassword" 
+                class="form-input" 
+                placeholder="••••••••" 
+                value="flowlock123" 
+                required
+              >
+              <button type="button" id="toggleLoginPw" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide Password">
+                👁️
+              </button>
+            </div>
           </div>
 
           <div class="form-options">
@@ -127,6 +132,11 @@
 
         <div class="auth-form-footer">
           <p>Don't have an account? <a href="signup.html" class="auth-link">Create account</a></p>
+          <p style="margin-top: 10px;">
+            <a href="landing.html" style="font-weight: 500; font-size: 12px; color: var(--text-dim); text-decoration: none;">
+              ← Back to Product Overview
+            </a>
+          </p>
         </div>
 
       </div>
@@ -142,32 +152,57 @@
       // Auth Guard for login page
       checkAuthGuard('login');
 
+      // Check query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('registered') === '1') {
+        showToast('✓ Account created successfully! Please sign in.', 'success');
+      } else if (urlParams.get('expired') === '1') {
+        showToast('Your session has expired. Please sign in again.', 'info');
+      }
+
       const form = document.getElementById('loginForm');
       const errorEl = document.getElementById('loginError');
       const quickDemoBtn = document.getElementById('quickDemoBtn');
+      const passwordInput = document.getElementById('loginPassword');
+      const togglePwBtn = document.getElementById('toggleLoginPw');
 
-      async function handleLoginSubmit(email, password) {
-        const result = await loginUser(email, password);
+      // Password show/hide toggle
+      if (togglePwBtn && passwordInput) {
+        togglePwBtn.addEventListener('click', () => {
+          const isPassword = passwordInput.type === 'password';
+          passwordInput.type = isPassword ? 'text' : 'password';
+          togglePwBtn.textContent = isPassword ? '🙈' : '👁️';
+        });
+      }
+
+      async function handleLoginSubmit(email, password, remember = true) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+
+        const result = await loginUser(email, password, remember);
         if (result.success) {
-          window.location.href = 'dashboard.html';
+          showToast(`Welcome back, ${result.user.name}!`, 'success');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 300);
         } else {
-          errorEl.textContent = result.message;
+          errorEl.textContent = result.message || 'Unable to sign in. Please try again.';
           errorEl.style.display = 'block';
           errorEl.classList.add('active');
         }
       }
 
-      form.addEventListener('submit', async(e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        errorEl.style.display = 'none';
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        handleLoginSubmit(email, password);
+        const remember = document.getElementById('rememberMe').checked;
+        await handleLoginSubmit(email, password, remember);
       });
 
       if (quickDemoBtn) {
-        quickDemoBtn.addEventListener('click', () => {
-          handleLoginSubmit('demo@flowlock.app', 'flowlock123');
+        quickDemoBtn.addEventListener('click', async () => {
+          await handleLoginSubmit('demo@flowlock.app', 'flowlock123', true);
         });
       }
     });

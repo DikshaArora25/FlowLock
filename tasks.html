@@ -383,7 +383,9 @@
 
           if (!validation.isValid) {
             renderFormErrors(taskForm, validation.errors);
-            showToast('Please fix the errors in the form.', 'error');
+            const firstErrorField = Object.keys(validation.errors)[0];
+            const firstErrorMessage = validation.errors[firstErrorField];
+            showToast(firstErrorMessage || 'Please fix the errors in the form.', 'error');
             return;
           }
 

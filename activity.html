@@ -180,7 +180,7 @@
       const clearBtn = document.getElementById('clearActivityBtn');
       if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-          taskManager.activities = [];
+          taskManager.clearActivities();
           renderActivityTimeline();
         });
       }

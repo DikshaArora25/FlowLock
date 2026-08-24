@@ -27,11 +27,14 @@ const appState = {
 
 // ─── Boot ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Auth guard — redirects to index.html if not logged in
+  // 1. Auth guard — redirects to login.html if not logged in
   const user = checkAuthGuard('dashboard');
   if (user) {
-    const el = document.getElementById('userName');
-    if (el) el.textContent = user.name || 'Diksha';
+    const nameEl = document.getElementById('userName');
+    if (nameEl) nameEl.textContent = user.name || 'User';
+
+    const avatarEl = document.querySelector('.user-avatar');
+    if (avatarEl) avatarEl.textContent = (user.name || 'U').charAt(0).toUpperCase();
   }
 
   // 2. Load saved theme preference
@@ -53,8 +56,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initDemoScenarioButtons();
   initJsonImportExport();
 
+  // 5. Handle #inspector URL hash navigation
+  const handleHashRouting = () => {
+    if (window.location.hash === '#inspector') {
+      const targetTask = taskManager.getFirstLockedTask() || taskManager.getAllTasks()[0];
+      if (targetTask) {
+        renderDependencyInspector(targetTask, taskManager.getAllTasks());
+        openModal('inspectorModal');
+      }
+    }
+  };
+  handleHashRouting();
+  window.addEventListener('hashchange', handleHashRouting);
+
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+
+  const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+  if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
 });
 
 // ─── Full UI Refresh ──────────────────────────────────────────────────────────

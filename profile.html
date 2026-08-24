@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FlowLock - User Profile</title>
-  <meta name="description" content="FlowLock User Profile and Session Details">
+  <title>FlowLock - Account Profile & Security Settings</title>
+  <meta name="description" content="Manage your FlowLock user profile, workspace role, and cryptographic security credentials.">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,11 +12,14 @@
 </head>
 <body>
   <div class="app-layout">
+    
     <!-- Sidebar Nav -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-logo">🔒</span>
-        <span class="sidebar-title">FlowLock</span>
+        <a href="dashboard.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+          <span class="sidebar-logo">🔒</span>
+          <span class="sidebar-title">FlowLock</span>
+        </a>
       </div>
       
       <nav class="sidebar-nav">
@@ -24,9 +27,21 @@
           <span class="nav-icon">📁</span>
           <span>Workspace</span>
         </a>
+        <a href="tasks.html" class="sidebar-nav-item">
+          <span class="nav-icon">✓</span>
+          <span>Tasks</span>
+        </a>
+        <a href="dashboard.html#inspector" class="sidebar-nav-item">
+          <span class="nav-icon">🔗</span>
+          <span>Dependencies</span>
+        </a>
         <a href="profile.html" class="sidebar-nav-item active">
           <span class="nav-icon">👤</span>
           <span>Profile</span>
+        </a>
+        <a href="activity.html" class="sidebar-nav-item">
+          <span class="nav-icon">📜</span>
+          <span>Activity</span>
         </a>
       </nav>
 
@@ -35,7 +50,7 @@
           <span class="nav-icon">🌙</span>
           <span>Theme</span>
         </button>
-        <button id="sidebarLogoutBtn" class="sidebar-logout-btn">
+        <button id="sidebarLogoutBtn" class="sidebar-logout-btn" title="Logout">
           <span class="nav-icon">🚪</span>
           <span>Logout</span>
         </button>
@@ -50,61 +65,178 @@
           <a href="dashboard.html" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
             ← Back to Workspace
           </a>
-          <span class="workspace-title">Profile</span>
+          <span class="workspace-title">Account Settings & Security</span>
         </div>
 
         <div class="header-right">
-          <div class="user-profile" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;">
-            <div class="user-avatar">D</div>
-            <span id="userNameHeader" class="user-name" style="font-size: 13px; font-weight: 600;">Diksha</span>
+          <div class="user-profile" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;">
+            <div id="userAvatarHeader" class="user-avatar">D</div>
+            <span id="userNameHeader" class="user-name" style="font-size: 13px; font-weight: 600;">User</span>
           </div>
         </div>
       </header>
 
       <!-- Main Profile Container -->
-      <main class="main-container" style="max-width: 680px; margin: 30px auto 0 auto;">
-        <div class="profile-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md);">
-          
-          <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px;">
-            <div class="user-avatar" style="width: 60px; height: 60px; font-size: 24px; background: var(--accent-primary);">D</div>
-            <div>
-              <h2 id="profileName" style="font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">DIKSHA</h2>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-done);"></span>
-                <span style="font-size: 13px; color: var(--status-done); font-weight: 600;">● Active</span>
+      <main class="main-container" style="max-width: 800px; margin: 30px auto 0 auto;">
+        
+        <!-- Profile Header Card -->
+        <div class="profile-section-card" style="margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <div id="profileAvatarBig" class="user-avatar" style="width: 68px; height: 68px; font-size: 28px; background: var(--accent-primary); border: 2px solid rgba(255, 255, 255, 0.2);">
+                D
+              </div>
+              <div>
+                <h2 id="profileNameDisplay" style="font-size: 22px; font-weight: 800; color: var(--text-main); letter-spacing: -0.01em;">
+                  DIKSHA
+                </h2>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
+                  <span id="profileRoleBadge" class="card-priority priority-high" style="font-size: 11px; padding: 2px 8px;">
+                    Lead Engineer
+                  </span>
+                  <span style="font-size: 13px; color: var(--status-done); font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--status-done);"></span>
+                    Active Session
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 18px;">
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Email</span>
-              <span id="profileEmail" style="font-size: 14px; color: var(--text-main); font-weight: 500;">demo@flowlock.app</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Role</span>
-              <span id="profileRole" style="font-size: 14px; color: var(--text-main); font-weight: 500;">Lead Engineer</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Account Status</span>
-              <span style="font-size: 14px; color: var(--status-done); font-weight: 600;">Active</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Session</span>
-              <span style="font-size: 14px; color: var(--text-main); font-weight: 500;">Authenticated</span>
+            <div>
+              <button id="logoutBtn" class="btn btn-danger" style="font-size: 13px;">
+                🚪 Sign Out
+              </button>
             </div>
           </div>
+        </div>
 
-          <div style="display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 24px;">
-            <a href="dashboard.html" class="btn btn-secondary" style="text-decoration: none;">
-              ← Back to Workspace
-            </a>
-            <button id="logoutBtn" class="btn btn-danger">
-              🚪 Logout
-            </button>
+        <div class="profile-settings-grid">
+          
+          <!-- Edit Personal Details -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <h3 class="profile-section-title">Personal Information</h3>
+              <p class="profile-section-subtitle">Update your profile display name and engineering role</p>
+            </div>
+
+            <form id="profileInfoForm" style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="form-group">
+                <label for="editFullName" class="form-label">Full Name *</label>
+                <input type="text" id="editFullName" class="form-input" required>
+              </div>
+
+              <div class="form-group">
+                <label for="editRole" class="form-label">Engineering Role</label>
+                <select id="editRole" class="form-input">
+                  <option value="Lead Engineer">Lead Engineer</option>
+                  <option value="Senior Developer">Senior Developer</option>
+                  <option value="Frontend Engineer">Frontend Engineer</option>
+                  <option value="Backend Engineer">Backend Engineer</option>
+                  <option value="QA Engineer">QA Engineer</option>
+                  <option value="Product Manager">Product Manager</option>
+                  <option value="Project Member">Project Member</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="displayEmail" class="form-label">Account Email (Primary ID)</label>
+                <input type="email" id="displayEmail" class="form-input" disabled style="opacity: 0.7; cursor: not-allowed;">
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="submit" class="btn btn-primary">
+                  Save Profile Changes
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Change Password -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <h3 class="profile-section-title">Security & Password</h3>
+              <p class="profile-section-subtitle">Update your account password with PBKDF2-HMAC-SHA256 encryption</p>
+            </div>
+
+            <form id="changePasswordForm" style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="form-group">
+                <label for="currentPassword" class="form-label">Current Password *</label>
+                <div class="password-input-group">
+                  <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password" required>
+                  <button type="button" id="toggleCurrentPw" class="btn-toggle-pw" aria-label="Toggle password visibility">👁️</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="newPassword" class="form-label">New Password *</label>
+                <div class="password-input-group">
+                  <input type="password" id="newPassword" class="form-input" placeholder="Create new strong password" required>
+                  <button type="button" id="toggleNewPw" class="btn-toggle-pw" aria-label="Toggle password visibility">👁️</button>
+                </div>
+
+                <!-- Password Strength Meter -->
+                <div id="newPasswordStrength" class="password-strength-container" style="display: none;">
+                  <div class="strength-header">
+                    <span style="color: var(--text-dim);">Strength:</span>
+                    <span id="strengthLabel" class="strength-label" style="color: #ef4444;">Weak</span>
+                  </div>
+                  <div class="strength-bar-track">
+                    <div id="strengthBarFill" class="strength-bar-fill"></div>
+                  </div>
+                  <div class="strength-checklist">
+                    <div id="crit-len" class="criteria-item"><span class="criteria-icon">○</span> 8+ Characters</div>
+                    <div id="crit-up" class="criteria-item"><span class="criteria-icon">○</span> Uppercase letter</div>
+                    <div id="crit-low" class="criteria-item"><span class="criteria-icon">○</span> Lowercase letter</div>
+                    <div id="crit-num" class="criteria-item"><span class="criteria-icon">○</span> Number (0-9)</div>
+                    <div id="crit-spec" class="criteria-item" style="grid-column: span 2;"><span class="criteria-icon">○</span> Special character (!@#$%^&*)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirmNewPassword" class="form-label">Confirm New Password *</label>
+                <div class="password-input-group">
+                  <input type="password" id="confirmNewPassword" class="form-input" placeholder="Re-enter new password" required>
+                  <button type="button" id="toggleConfirmNewPw" class="btn-toggle-pw" aria-label="Toggle password visibility">👁️</button>
+                </div>
+                <div id="newPwError" class="field-error"></div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="submit" class="btn btn-secondary">
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Active Session Details -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <h3 class="profile-section-title">Active Session & Encryption State</h3>
+              <p class="profile-section-subtitle">Cryptographic token lifecycle and persistence metadata</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <span style="color: var(--text-dim);">Session Token</span>
+                <span id="sessionTokenDisplay" class="session-info-badge">token-loading</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <span style="color: var(--text-dim);">Authentication Engine</span>
+                <span style="font-weight: 600; color: var(--status-done);">PBKDF2-HMAC-SHA256 (100k iters)</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <span style="color: var(--text-dim);">Authenticated At</span>
+                <span id="sessionLoggedInDisplay" style="color: var(--text-main); font-weight: 500;">—</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-dim);">Session Expires</span>
+                <span id="sessionExpiresDisplay" style="color: var(--text-main); font-weight: 500;">—</span>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -117,18 +249,42 @@
   </div>
 
   <script type="module">
-    import { checkAuthGuard, logoutUser } from './js/auth.js';
+    import {
+      checkAuthGuard,
+      logoutUser,
+      getCurrentUser,
+      updateUserProfile,
+      changeUserPassword,
+      calculatePasswordStrength
+    } from './js/auth.js';
     import { loadPreferences, savePreferences } from './js/storage.js';
+    import { showToast } from './js/utils.js';
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Auth Guard for profile page
       const user = checkAuthGuard('profile');
-      if (user) {
-        document.getElementById('profileName').textContent = (user.name || 'DIKSHA').toUpperCase();
-        document.getElementById('userNameHeader').textContent = user.name || 'Diksha';
-        document.getElementById('profileEmail').textContent = user.email || 'demo@flowlock.app';
-        document.getElementById('profileRole').textContent = user.role || 'Lead Engineer';
+      if (!user) return;
+
+      // Populate UI
+      function renderUserFields(u) {
+        const initial = (u.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('userAvatarHeader').textContent = initial;
+        document.getElementById('userNameHeader').textContent = u.name || 'User';
+        document.getElementById('profileAvatarBig').textContent = initial;
+        document.getElementById('profileNameDisplay').textContent = (u.name || 'USER').toUpperCase();
+        document.getElementById('profileRoleBadge').textContent = u.role || 'Software Engineer';
+        
+        document.getElementById('editFullName').value = u.name || '';
+        document.getElementById('editRole').value = u.role || 'Software Engineer';
+        document.getElementById('displayEmail').value = u.email || '';
+
+        // Session
+        const token = u.sessionToken || 'local-demo-token';
+        document.getElementById('sessionTokenDisplay').textContent = token.length > 20 ? `${token.substring(0, 18)}...` : token;
+        document.getElementById('sessionLoggedInDisplay').textContent = u.loggedInAt ? new Date(u.loggedInAt).toLocaleString() : 'Active Session';
+        document.getElementById('sessionExpiresDisplay').textContent = u.expiresAt ? new Date(u.expiresAt).toLocaleString() : '24 Hours';
       }
+
+      renderUserFields(user);
 
       // Theme toggle
       const prefs = loadPreferences();
@@ -150,11 +306,110 @@
       }
 
       // Logout buttons
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+      document.getElementById('logoutBtn')?.addEventListener('click', logoutUser);
+      document.getElementById('sidebarLogoutBtn')?.addEventListener('click', logoutUser);
 
-      const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
-      if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
+      // Handle Edit Profile Form
+      const profileForm = document.getElementById('profileInfoForm');
+      profileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('editFullName').value.trim();
+        const role = document.getElementById('editRole').value;
+
+        const result = updateUserProfile({ name, role });
+        if (result.success) {
+          renderUserFields(result.user);
+          showToast('✓ Profile information updated successfully!', 'success');
+        } else {
+          showToast(`Error: ${result.message}`, 'error');
+        }
+      });
+
+      // Password Toggles
+      const setupToggle = (btnId, inputId) => {
+        const btn = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        if (btn && input) {
+          btn.addEventListener('click', () => {
+            const isPw = input.type === 'password';
+            input.type = isPw ? 'text' : 'password';
+            btn.textContent = isPw ? '🙈' : '👁️';
+          });
+        }
+      };
+
+      setupToggle('toggleCurrentPw', 'currentPassword');
+      setupToggle('toggleNewPw', 'newPassword');
+      setupToggle('toggleConfirmNewPw', 'confirmNewPassword');
+
+      // Real-time strength meter for new password
+      const newPwInput = document.getElementById('newPassword');
+      const strengthCont = document.getElementById('newPasswordStrength');
+      const strengthLabel = document.getElementById('strengthLabel');
+      const strengthBar = document.getElementById('strengthBarFill');
+
+      newPwInput.addEventListener('input', () => {
+        const val = newPwInput.value;
+        if (!val) {
+          strengthCont.style.display = 'none';
+          return;
+        }
+
+        strengthCont.style.display = 'flex';
+        const str = calculatePasswordStrength(val);
+
+        strengthLabel.textContent = str.label;
+        strengthLabel.style.color = str.color;
+        strengthBar.style.width = `${str.percent}%`;
+        strengthBar.style.backgroundColor = str.color;
+
+        const updateCriteria = (id, ok) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (ok) {
+            el.classList.add('met');
+            el.querySelector('.criteria-icon').textContent = '✓';
+          } else {
+            el.classList.remove('met');
+            el.querySelector('.criteria-icon').textContent = '○';
+          }
+        };
+
+        updateCriteria('crit-len', str.criteria.length);
+        updateCriteria('crit-up', str.criteria.upper);
+        updateCriteria('crit-low', str.criteria.lower);
+        updateCriteria('crit-num', str.criteria.number);
+        updateCriteria('crit-spec', str.criteria.special);
+      });
+
+      // Handle Change Password Form
+      const pwForm = document.getElementById('changePasswordForm');
+      pwForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        const errEl = document.getElementById('newPwError');
+        errEl.textContent = '';
+        errEl.classList.remove('active');
+
+        const result = await changeUserPassword({
+          currentPassword,
+          newPassword,
+          confirmNewPassword
+        });
+
+        if (result.success) {
+          showToast('✓ Password updated successfully!', 'success');
+          pwForm.reset();
+          strengthCont.style.display = 'none';
+        } else {
+          errEl.textContent = result.message;
+          errEl.classList.add('active');
+          showToast(`Password update failed: ${result.message}`, 'error');
+        }
+      });
+
     });
   </script>
 </body>
