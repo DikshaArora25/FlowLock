@@ -1,8 +1,3 @@
-/**
- * FlowLock - Task Manager Module
- * Central state store: CRUD, search, filter, sort, activity log, demo seed
- */
-
 import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
 import { recalculateLocks, detectCycle, propagateDependencyState, canMoveTask } from './dependencyEngine.js';
 import { generateId } from './utils.js';
@@ -176,7 +171,6 @@ class TaskManager {
     return this.tasks.find(t => t.id === id) || null;
   }
 
-  // Returns a currently locked task, or null if none
   getFirstLockedTask() {
     return this.tasks.find(t => t.locked) || null;
   }
@@ -245,7 +239,7 @@ class TaskManager {
     const updatedTask = {
       ...currentTask,
       ...updatedFields,
-      id: taskId, // never overwrite id
+      id: taskId,
       updatedAt: new Date().toISOString()
     };
 
@@ -279,7 +273,6 @@ class TaskManager {
 
     const oldStatus = task.status;
 
-    // Mutate in-place then propagate
     const taskRef = this.tasks.find(t => t.id === taskId);
     taskRef.status = newStatus;
     taskRef.updatedAt = new Date().toISOString();
@@ -396,7 +389,6 @@ class TaskManager {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
     this.activities.unshift(entry);
-    // Keep at most 50 entries
     if (this.activities.length > 50) this.activities = this.activities.slice(0, 50);
     saveActivityLog(this.activities);
   }

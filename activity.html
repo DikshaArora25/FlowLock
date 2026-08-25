@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,17 +11,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <div class="app-layout">
-    <!-- Sidebar Nav -->
+    
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <a href="dashboard.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+        <a href="dashboard.html"
+          style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
           <span class="sidebar-logo">🔒</span>
           <span class="sidebar-title">FlowLock</span>
         </a>
       </div>
-      
+
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="sidebar-nav-item">
           <span class="nav-icon">📁</span>
@@ -43,7 +46,7 @@
           <span>Activity</span>
         </a>
       </nav>
-      
+
       <div class="sidebar-footer">
         <button id="themeToggleBtn" class="sidebar-footer-btn" title="Toggle Light/Dark Theme">
           <span class="nav-icon">🌙</span>
@@ -56,9 +59,9 @@
       </div>
     </aside>
 
-    <!-- Main Content Layout -->
+    
     <div class="content-layout">
-      <!-- Top Header -->
+      
       <header class="header">
         <div class="header-left">
           <span class="workspace-title">Real-Time Workspace Audit Trail</span>
@@ -72,21 +75,36 @@
         </div>
       </header>
 
-      <!-- Main Container -->
-      <main class="main-container" style="max-width: 800px; margin: 24px auto 0 auto;">
-        
-        <div class="activity-page-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md);">
-          
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 24px;">
+      
+      <section class="tasks-hero" style="margin: 24px; text-align: center;">
+        <div class="hero-content">
+          <h1 class="hero-title" style="margin-bottom: 20px; font-size: 2.2rem; font-weight: 800;">Real-Time Activity</h1>
+          <p class="hero-subtitle" style="color: var(--text-main); opacity: 0.8; font-size: 1.1rem; margin-top: 16px; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5;">Track task state changes, lock recalculations, and system events instantly.</p>
+          <a href="dashboard.html" class="btn btn-primary hero-cta">Back to Dashboard →</a>
+        </div>
+      </section>
+
+      
+
+
+      
+      <main class="main-container" style="max-width: 900px; margin: 0 auto; padding-bottom: 40px;">
+
+        <div class="activity-page-card glass-card" style="padding: 32px; border-radius: var(--radius-lg);">
+
+          <div
+            style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 24px;">
             <div>
               <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);">Workspace Activity Timeline</h2>
-              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Audit trail tracking task state changes, lock recalculations, and system events.</p>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Audit trail tracking task state
+                changes, lock recalculations, and system events.</p>
             </div>
-            <button id="clearActivityBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">Clear History</button>
+            <button id="clearActivityBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">Clear
+              History</button>
           </div>
 
-          <div id="fullActivityList" class="activity-timeline-container">
-            <!-- Dynamically populated -->
+          <div id="fullActivityList" class="activity-timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 18px;">
+            
           </div>
 
         </div>
@@ -188,4 +206,5 @@
     });
   </script>
 </body>
+
 </html>

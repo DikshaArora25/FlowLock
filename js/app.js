@@ -1,8 +1,3 @@
-/**
- * FlowLock — Main Application Controller
- * ES6 Modules · HTML5 Drag & Drop · Event Delegation · State Management
- */
-
 import { checkAuthGuard, logoutUser } from './auth.js';
 import { taskManager } from './taskManager.js';
 import {
@@ -16,7 +11,6 @@ import { validateTaskForm, renderFormErrors } from './validation.js';
 import { showToast, debounce } from './utils.js';
 import { savePreferences, loadPreferences, exportBoardAsJSON, parseAndValidateImportedJSON } from './storage.js';
 
-// ─── Global App State ────────────────────────────────────────────────────────
 const appState = {
   searchQuery: '',
   filterStatus: 'all',
@@ -25,9 +19,8 @@ const appState = {
   taskToDeleteId: null
 };
 
-// ─── Boot ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Auth guard — redirects to login.html if not logged in
+  // Auth guard — redirects to login.html if not logged in
   const user = checkAuthGuard('dashboard');
   if (user) {
     const nameEl = document.getElementById('userName');
@@ -37,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (avatarEl) avatarEl.textContent = (user.name || 'U').charAt(0).toUpperCase();
   }
 
-  // 2. Load saved theme preference
   const prefs = loadPreferences();
   if (prefs.theme) {
     document.documentElement.setAttribute('data-theme', prefs.theme);
@@ -45,10 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeBtn) themeBtn.textContent = prefs.theme === 'dark' ? '🌙' : '☀️';
   }
 
-  // 3. Render initial state
   refreshAppUI();
 
-  // 4. Attach all event listeners
   initThemeToggle();
   initToolbarListeners();
   initKanbanDragAndDrop();
@@ -56,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDemoScenarioButtons();
   initJsonImportExport();
 
-  // 5. Handle #inspector URL hash navigation
+  // Handle #inspector URL hash navigation
   const handleHashRouting = () => {
     if (window.location.hash === '#inspector') {
       const targetTask = taskManager.getFirstLockedTask() || taskManager.getAllTasks()[0];
@@ -76,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
 });
 
-// ─── Full UI Refresh ──────────────────────────────────────────────────────────
 export const refreshAppUI = () => {
   const allTasks = taskManager.getAllTasks();
   const filteredTasks = taskManager.getFilteredTasks({
@@ -92,7 +81,6 @@ export const refreshAppUI = () => {
   renderActivityLog(activities);
 };
 
-// ─── Theme Toggle ─────────────────────────────────────────────────────────────
 const initThemeToggle = () => {
   const btn = document.getElementById('themeToggleBtn');
   if (!btn) return;
@@ -107,7 +95,6 @@ const initThemeToggle = () => {
   });
 };
 
-// ─── Toolbar: Search, Filter, Sort ───────────────────────────────────────────
 const initToolbarListeners = () => {
   const searchInput = document.getElementById('searchInput');
   const filterSelect = document.getElementById('filterSelect');
@@ -135,12 +122,10 @@ const initToolbarListeners = () => {
   }
 };
 
-// ─── Kanban Drag & Drop ───────────────────────────────────────────────────────
 const initKanbanDragAndDrop = () => {
   const board = document.getElementById('kanbanBoard');
   if (!board) return;
 
-  // Drag start / end delegated on board
   board.addEventListener('dragstart', (e) => {
     const card = e.target.closest('.task-card');
     if (!card) return;
@@ -157,7 +142,6 @@ const initKanbanDragAndDrop = () => {
     appState.draggedTaskId = null;
   });
 
-  // Column drop zones
   document.querySelectorAll('.task-list').forEach(list => {
     list.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -182,7 +166,7 @@ const initKanbanDragAndDrop = () => {
   });
 };
 
-// Shared task-move handler used by drag-drop AND demo buttons
+// Task move handler (validates locks and triggers anti-cheat feedback when blocked)
 const handleTaskMove = (taskId, targetStatus) => {
   const result = taskManager.moveTaskStatus(taskId, targetStatus);
 
@@ -207,7 +191,6 @@ const handleTaskMove = (taskId, targetStatus) => {
   return result;
 };
 
-// ─── Modal Helpers ────────────────────────────────────────────────────────────
 export const openModal = (modalId) => {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.add('active');
@@ -218,16 +201,13 @@ export const closeModal = (modalId) => {
   if (modal) modal.classList.remove('active');
 };
 
-// ─── Modal Event Listeners ────────────────────────────────────────────────────
 const initModalListeners = () => {
-  // Backdrop click to close
   document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) backdrop.classList.remove('active');
     });
   });
 
-  // Close buttons
   document.querySelectorAll('.btn-close-modal').forEach(btn => {
     btn.addEventListener('click', () => {
       const modal = btn.closest('.modal-backdrop');
@@ -235,7 +215,6 @@ const initModalListeners = () => {
     });
   });
 
-  // "New Task" button in toolbar
   const addTaskBtn = document.getElementById('addTaskBtn');
   if (addTaskBtn) {
     addTaskBtn.addEventListener('click', () => {
@@ -244,13 +223,11 @@ const initModalListeners = () => {
     });
   }
 
-  // Task form submit (handles both CREATE and EDIT)
   const taskForm = document.getElementById('taskForm');
   if (taskForm) {
     taskForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // Clear old errors
       taskForm.querySelectorAll('.form-error').forEach(el => (el.textContent = ''));
 
       const taskId = document.getElementById('taskIdInput').value.trim();
@@ -266,18 +243,14 @@ const initModalListeners = () => {
 
       const formData = { title, description, priority, assignee, dueDate, status, dependsOn };
 
-      // Validate
       const validation = validateTaskForm(formData, taskId, taskManager.getAllTasks());
-     if (!validation.isValid) {
-    renderFormErrors(taskForm, validation.errors);
-
-    const firstErrorField = Object.keys(validation.errors)[0];
-    const firstErrorMessage = validation.errors[firstErrorField];
-
-    showToast(firstErrorMessage, 'error');
-
-    return;
-}
+      if (!validation.isValid) {
+        renderFormErrors(taskForm, validation.errors);
+        const firstErrorField = Object.keys(validation.errors)[0];
+        const firstErrorMessage = validation.errors[firstErrorField];
+        showToast(firstErrorMessage, 'error');
+        return;
+      }
 
       let result;
       if (taskId) {
@@ -297,7 +270,6 @@ const initModalListeners = () => {
         return;
       }
 
-      // Reset filters so created/edited task is visible
       appState.searchQuery = '';
       const searchInput = document.getElementById('searchInput');
       if (searchInput) searchInput.value = '';
@@ -307,7 +279,6 @@ const initModalListeners = () => {
     });
   }
 
-  // Delegated card actions: Inspect, Edit, Delete
   const board = document.getElementById('kanbanBoard');
   if (board) {
     board.addEventListener('click', (e) => {
@@ -349,7 +320,6 @@ const initModalListeners = () => {
     });
   }
 
-  // Confirm delete
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
   if (confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', () => {
@@ -364,7 +334,6 @@ const initModalListeners = () => {
   }
 };
 
-// ─── Demo Scenario Buttons ────────────────────────────────────────────────────
 const initDemoScenarioButtons = () => {
   const resetBtn = document.getElementById('demoResetBtn');
   const completeDepBtn = document.getElementById('demoCompleteDepBtn');
@@ -372,7 +341,6 @@ const initDemoScenarioButtons = () => {
   const showChainBtn = document.getElementById('demoShowChainBtn');
   const sidebarInspectBtn = document.getElementById('sidebarInspectBtn');
 
-  // Reset workspace to seed state
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       taskManager.resetDemoWorkspace();
@@ -381,10 +349,8 @@ const initDemoScenarioButtons = () => {
     });
   }
 
-  // Complete a blocking prerequisite → unlock a downstream task
   if (completeDepBtn) {
     completeDepBtn.addEventListener('click', () => {
-      // Find the first blocking dependency (an incomplete dep of a locked task)
       const blocking = taskManager.getFirstBlockingDependency();
       if (!blocking) {
         showToast('No blocking dependencies found. Try resetting the workspace first.', 'warning');
@@ -406,7 +372,6 @@ const initDemoScenarioButtons = () => {
     });
   }
 
-  // Try to move a locked task — triggers anti-cheat
   if (tryLockedBtn) {
     tryLockedBtn.addEventListener('click', () => {
       const locked = taskManager.getFirstLockedTask();
@@ -418,7 +383,6 @@ const initDemoScenarioButtons = () => {
     });
   }
 
-  // Show dependency chain for first locked task
   const openInspectorForFirstLocked = () => {
     const locked = taskManager.getFirstLockedTask();
     if (!locked) {
@@ -441,7 +405,6 @@ const initDemoScenarioButtons = () => {
   }
 };
 
-// ─── JSON Import / Export ─────────────────────────────────────────────────────
 const initJsonImportExport = () => {
   const exportBtn = document.getElementById('exportJsonBtn');
   const importBtn = document.getElementById('importJsonBtn');

@@ -1,11 +1,5 @@
-/**
- * FlowLock Landing Page Interactive Engine
- * Reuses core dependency logic from dependencyEngine.js
- */
-
 import { isTaskLocked, recalculateLocks } from './dependencyEngine.js';
 
-// ─── State for "See Dependencies In Action" Demo ─────────────────────────────
 const DEMO_CHAIN_INITIAL = [
   {
     id: 'dep-1',
@@ -61,7 +55,6 @@ function updateDemoChainLocks() {
   demoChainState = recalculateLocks(demoChainState);
 }
 
-// Render "See Dependencies In Action" UI
 function renderInteractiveDemo() {
   updateDemoChainLocks();
   const container = document.getElementById('interactiveDemoChain');
@@ -114,7 +107,6 @@ function renderInteractiveDemo() {
     }
   });
 
-  // Update Status Log Message
   const logEl = document.getElementById('demoActionLog');
   if (logEl) {
     const lockedTask = demoChainState.find(t => t.locked);
@@ -130,7 +122,6 @@ function renderInteractiveDemo() {
   }
 }
 
-// Handle "Complete Prerequisite" action
 function completeNextPrerequisite() {
   const readyTask = demoChainState.find(t => !t.locked && t.status !== 'Done');
   if (readyTask) {
@@ -142,7 +133,6 @@ function completeNextPrerequisite() {
   }
 }
 
-// Handle "Move Task Forward" action
 function moveTaskForward() {
   const inProgressTask = demoChainState.find(t => t.status === 'In Progress');
   const readyTask = demoChainState.find(t => !t.locked && t.status === 'Todo');
@@ -165,14 +155,12 @@ function moveTaskForward() {
   }
 }
 
-// Reset Demo
 function resetDemoChain() {
   demoChainState = JSON.parse(JSON.stringify(DEMO_CHAIN_INITIAL));
   renderInteractiveDemo();
   showLandingToast('Demo reset to initial state.', 'info');
 }
 
-// ─── Interactive Dependency Graph Component ──────────────────────────────────
 const GRAPH_NODES = [
   { id: 'g1', title: 'Project Planning', status: 'Done', dependsOn: [], desc: 'Define tech stack & architecture' },
   { id: 'g2', title: 'Database Design', status: 'Done', dependsOn: ['g1'], desc: 'Schema & migrations' },
@@ -243,11 +231,9 @@ function initInteractiveGraph() {
   }
 
   renderGraph();
-  // Select first node by default
   selectGraphNode(GRAPH_NODES[4], isTaskLocked(GRAPH_NODES[4], GRAPH_NODES));
 }
 
-// ─── Mini Kanban Preview Component ───────────────────────────────────────────
 const KANBAN_PREVIEW_TASKS = [
   { id: 'kb-1', title: 'Database Schema', status: 'Done', priority: 'High', locked: false },
   { id: 'kb-2', title: 'Authentication Service', status: 'In Progress', priority: 'High', locked: false },
@@ -274,7 +260,7 @@ function renderMiniKanban() {
     card.innerHTML = `
       <div class="mini-card-header">
         <span class="mini-card-priority priority-${task.priority.toLowerCase()}">${task.priority}</span>
-        <span class="mini-card-badge ${task.status === 'Done' ? 'badge-done' : task.locked ? 'badge-locked' : 'badge-ready'}">
+        <span class="badge ${task.status === 'Done' ? 'badge-done' : task.locked ? 'badge-locked' : 'badge-ready'}">
           ${task.status === 'Done' ? '✓ DONE' : task.locked ? '🔒 LOCKED' : '⚡ READY'}
         </span>
       </div>
@@ -296,7 +282,6 @@ function renderMiniKanban() {
   });
 }
 
-// ─── Toast Notifications ─────────────────────────────────────────────────────
 function showLandingToast(msg, type = 'info') {
   let toastContainer = document.getElementById('landingToastContainer');
   if (!toastContainer) {
@@ -317,13 +302,11 @@ function showLandingToast(msg, type = 'info') {
   }, 3500);
 }
 
-// ─── Boot Event Handlers ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   renderInteractiveDemo();
   initInteractiveGraph();
   renderMiniKanban();
 
-  // Attach button listeners
   const btnComplete = document.getElementById('btnCompletePrereq');
   const btnMove = document.getElementById('btnMoveForward');
   const btnReset = document.getElementById('btnResetDemo');
@@ -332,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnMove) btnMove.addEventListener('click', moveTaskForward);
   if (btnReset) btnReset.addEventListener('click', resetDemoChain);
 
-  // Mobile menu toggle
   const mobileToggle = document.getElementById('mobileNavToggle');
   const mobileMenu = document.getElementById('navLinksMenu');
   if (mobileToggle && mobileMenu) {

@@ -1,22 +1,15 @@
-/**
- * FlowLock Form Validation Module
- */
-
 import { detectCycle } from './dependencyEngine.js';
 import { parseLocalDate } from './utils.js';
 
-// Validate task form fields and dependency selection before submit
 export const validateTaskForm = (formData, currentTaskId = null, existingTasks = []) => {
   const errors = {};
 
-  // Title validation
   if (!formData.title || formData.title.trim() === '') {
     errors.title = 'Task title is required.';
   } else if (formData.title.trim().length < 3) {
     errors.title = 'Task title must be at least 3 characters.';
   }
 
-  // Duplicate title validation
   if (formData.title && formData.title.trim() !== '') {
     const normalizedTitle = formData.title.trim().toLowerCase();
 
@@ -34,9 +27,8 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
     if (duplicateTask) {
         errors.title = 'A task with this title already exists.';
     }
-}
+  }
 
-  // Description validation
   if (!formData.description || formData.description.trim() === '') {
     errors.description = 'Description is required.';
   }
@@ -57,11 +49,9 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
 
   // Dependency validation (Self-dependency, Duplicate, Circular dependency)
   if (Array.isArray(formData.dependsOn) && formData.dependsOn.length > 0) {
-    // 1. Self dependency check
     if (currentTaskId && formData.dependsOn.includes(currentTaskId)) {
       errors.dependsOn = 'A task cannot depend on itself.';
     } else {
-      // 2. Cycle detection check
       const targetId = currentTaskId || 'temp-new-task';
       const cycleResult = detectCycle(targetId, formData.dependsOn, existingTasks);
       if (cycleResult.hasCycle) {
@@ -91,16 +81,13 @@ export const validateTaskForm = (formData, currentTaskId = null, existingTasks =
   };
 };
 
-// Render error messages dynamically under form fields
 export const renderFormErrors = (formElement, errors) => {
-  // Clear previous errors
   const errorElements = formElement.querySelectorAll('.form-error');
   errorElements.forEach(el => {
     el.textContent = '';
     el.classList.remove('active');
   });
 
-  // Display active errors
   Object.keys(errors).forEach(field => {
     const errorEl = formElement.querySelector(`#error-${field}`);
     if (errorEl) {

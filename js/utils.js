@@ -1,8 +1,3 @@
-/**
- * FlowLock Utilities Module
- */
-
-// Generate unique ID using timestamp and random string
 export const generateId = (prefix = 'task') => {
   const randomStr = Math.random().toString(36).substring(2, 9);
   return `${prefix}-${Date.now().toString(36)}-${randomStr}`;
@@ -19,7 +14,6 @@ export const parseLocalDate = (dateString) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-// Format date string nicely (e.g., "Aug 15, 2026")
 export const formatDate = (dateString) => {
   if (!dateString) return 'No due date';
   const d = parseLocalDate(dateString);
@@ -28,7 +22,6 @@ export const formatDate = (dateString) => {
   return d.toLocaleDateString(undefined, options);
 };
 
-// Calculate relative days remaining
 export const getDaysRemaining = (dueDateString) => {
   if (!dueDateString) return null;
   const now = new Date();
@@ -52,7 +45,6 @@ export const escapeHtml = (unsafeStr) => {
     .replace(/'/g, "&#039;");
 };
 
-// Display custom animated Toast Notification
 export const showToast = (message, type = 'info', duration = 4000) => {
   let toastContainer = document.getElementById('toastContainer');
   if (!toastContainer) {
@@ -85,7 +77,6 @@ export const showToast = (message, type = 'info', duration = 4000) => {
   }, duration);
 };
 
-// Debounce helper for search input processing
 export const debounce = (func, delay = 250) => {
   let timerId;
   return (...args) => {
