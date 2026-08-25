@@ -9,12 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tasks.css">
 </head>
 <body>
   <div class="app-layout">
+    
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <a href="landing.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;" title="FlowLock Home (Landing Page)">
+        <a href="dashboard.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
           <span class="sidebar-logo">🔒</span>
           <span class="sidebar-title">FlowLock</span>
         </a>
@@ -55,7 +57,10 @@
       </div>
     </aside>
 
+    
+    
     <div class="content-layout">
+      
       <header class="header">
         <div class="header-left">
           <span class="workspace-title">Task Management View</span>
@@ -78,9 +83,47 @@
         </div>
       </header>
 
+      <section class="tasks-hero" style="margin: 24px; text-align: center;">
+        <div class="hero-content">
+          <h1 class="hero-title" style="margin-bottom: 20px; font-size: 2.2rem; font-weight: 800;">Manage Your Tasks Efficiently</h1>
+          <p class="hero-subtitle" style="color: var(--text-main); opacity: 0.8; font-size: 1.1rem; margin-top: 16px; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5;">Create, prioritize, and track progress with sleek, dependency‑aware UI.</p>
+          <a href="#tasksGrid" class="btn btn-primary hero-cta">Get Started →</a>
+        </div>
+      </section>
+
+      
       <main class="main-container">
         
-        <section class="toolbar">
+        
+        <div class="tasks-card-glass">
+  <section class="toolbar">
+    <div class="toolbar-left">
+      <select id="filterSelect" class="filter-select">
+        <option value="all">Filter: All Tasks</option>
+        <option value="Todo">Status: Todo</option>
+        <option value="In Progress">Status: In Progress</option>
+        <option value="Done">Status: Done</option>
+        <option value="Backlog">Status: Backlog</option>
+        <option value="locked">State: 🔒 Blocked Only</option>
+        <option value="High">Priority: High</option>
+        <option value="Medium">Priority: Medium</option>
+      </select>
+      <select id="sortSelect" class="filter-select">
+        <option value="priority">Sort by: Priority</option>
+        <option value="dueDate">Sort by: Due Date</option>
+        <option value="title">Sort by: Title</option>
+        <option value="dependencies">Sort by: Dependency Count</option>
+      </select>
+    </div>
+    <div class="toolbar-right">
+      <span id="tasksCountBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Showing 0 Tasks</span>
+    </div>
+  </section>
+
+  <section id="tasksGrid" class="tasks-table-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+    
+  </section>
+</div>
           <div class="toolbar-left">
             <select id="filterSelect" class="filter-select">
               <option value="all">Filter: All Tasks</option>
@@ -106,7 +149,10 @@
           </div>
         </section>
 
-        <section id="tasksGrid" class="tasks-table-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;"></section>
+        
+        <section id="tasksGrid" class="tasks-table-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+          
+        </section>
 
       </main>
 
@@ -116,6 +162,7 @@
     </div>
   </div>
 
+  
   <div id="taskModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
@@ -175,7 +222,9 @@
 
           <div class="form-group">
             <label class="form-label">Prerequisite Dependencies (Depends On)</label>
-            <div id="dependencyCheckboxes" class="dependency-select-box"></div>
+            <div id="dependencyCheckboxes" class="dependency-select-box">
+              
+            </div>
             <div id="error-dependsOn" class="form-error"></div>
           </div>
         </div>
@@ -204,6 +253,7 @@
         document.getElementById('headerUserAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
       }
 
+      // Theme toggle
       const prefs = loadPreferences();
       if (prefs.theme) {
         document.documentElement.setAttribute('data-theme', prefs.theme);
