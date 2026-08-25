@@ -220,13 +220,12 @@ function initInteractiveGraph() {
         <strong>Prerequisites:</strong> ${prereqs.length > 0 ? prereqs.join(', ') : 'None (Root Node)'}
       </div>
       <div class="graph-detail-field" style="margin-top: 6px;">
-        <strong>FlowLock Decision:</strong> ${
-          node.status === 'Done'
-            ? 'Completed. Downstream dependents unblocked.'
-            : isLocked
-            ? `<span style="color: var(--status-locked);">Blocked because prerequisites [${prereqs.join(', ')}] are incomplete.</span>`
-            : '<span style="color: var(--status-done);">Ready to move to In Progress or Done.</span>'
-        }
+        <strong>FlowLock Decision:</strong> ${node.status === 'Done'
+        ? 'Completed. Downstream dependents unblocked.'
+        : isLocked
+          ? `<span style="color: var(--status-locked);">Blocked because prerequisites [${prereqs.join(', ')}] are incomplete.</span>`
+          : '<span style="color: var(--status-done);">Ready to move to In Progress or Done.</span>'
+      }
       </div>
     `;
   }
