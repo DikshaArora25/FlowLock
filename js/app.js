@@ -8,7 +8,7 @@ import {
   renderActivityLog
 } from './ui.js';
 import { validateTaskForm, renderFormErrors } from './validation.js';
-import { showToast, debounce } from './utils.js';
+import { showToast, debounce, escapeHtml } from './utils.js';
 import { savePreferences, loadPreferences, exportBoardAsJSON, parseAndValidateImportedJSON } from './storage.js';
 
 const appState = {
@@ -198,20 +198,35 @@ export const openModal = (modalId) => {
 
 export const closeModal = (modalId) => {
   const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    if (modalId === 'deleteModal') {
+      appState.taskToDeleteId = null;
+    }
+  }
 };
 
 const initModalListeners = () => {
   document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
     backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) backdrop.classList.remove('active');
+      if (e.target === backdrop) {
+        backdrop.classList.remove('active');
+        if (backdrop.id === 'deleteModal') {
+          appState.taskToDeleteId = null;
+        }
+      }
     });
   });
 
   document.querySelectorAll('.btn-close-modal').forEach(btn => {
     btn.addEventListener('click', () => {
       const modal = btn.closest('.modal-backdrop');
-      if (modal) modal.classList.remove('active');
+      if (modal) {
+        modal.classList.remove('active');
+        if (modal.id === 'deleteModal') {
+          appState.taskToDeleteId = null;
+        }
+      }
     });
   });
 
@@ -300,22 +315,28 @@ const initModalListeners = () => {
         }
       } else if (deleteBtn) {
         const id = deleteBtn.dataset.id;
-        appState.taskToDeleteId = id;
+        if (!id) return;
 
         const task = taskManager.getTaskById(id);
-        if (task) {
-          const dependentTasks = taskManager.getAllTasks().filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(id));
-          let confirmMsg = `Are you sure you want to delete the task "${escapeHtml(task.title)}"?`;
-          if (dependentTasks.length > 0) {
-            confirmMsg = `
-              <strong>Warning:</strong> The following tasks depend on this:<br>
-              <em>${dependentTasks.map(t => escapeHtml(t.title)).join(', ')}</em><br><br>
-              Deleting it will remove the dependency reference. Continue?
-            `;
-          }
-          document.getElementById('deleteConfirmMessage').innerHTML = confirmMsg;
-          openModal('deleteModal');
+        if (!task) {
+          showToast('Task not found.', 'error');
+          return;
         }
+
+        appState.taskToDeleteId = id;
+
+        const dependentTasks = taskManager.getAllTasks().filter(t => Array.isArray(t.dependsOn) && t.dependsOn.includes(id));
+        let confirmMsg = `Are you sure you want to delete the task "${escapeHtml(task.title)}"?`;
+        if (dependentTasks.length > 0) {
+          confirmMsg = `
+            <strong>Warning:</strong> The following tasks depend on this:<br>
+            <em>${dependentTasks.map(t => escapeHtml(t.title)).join(', ')}</em><br><br>
+            Deleting it will remove the dependency reference. Continue?
+          `;
+        }
+        const msgEl = document.getElementById('deleteConfirmMessage');
+        if (msgEl) msgEl.innerHTML = confirmMsg;
+        openModal('deleteModal');
       }
     });
   }
@@ -323,12 +344,23 @@ const initModalListeners = () => {
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
   if (confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', () => {
-      if (appState.taskToDeleteId) {
-        taskManager.deleteTask(appState.taskToDeleteId, true);
-        showToast('Task deleted.', 'info');
+      const taskId = appState.taskToDeleteId;
+      if (!taskId) {
+        showToast('No task selected for deletion.', 'error');
+        closeModal('deleteModal');
+        return;
+      }
+
+      const result = taskManager.deleteTask(taskId, true);
+      if (result.success) {
+        showToast('Task deleted successfully.', 'success');
         appState.taskToDeleteId = null;
         closeModal('deleteModal');
         refreshAppUI();
+      } else {
+        showToast(result.message || 'Failed to delete task.', 'error');
+        appState.taskToDeleteId = null;
+        closeModal('deleteModal');
       }
     });
   }
