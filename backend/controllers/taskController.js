@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Task from '../models/Task.js';
 import Activity from '../models/Activity.js';
 import {
@@ -178,7 +178,7 @@ export const createTask = async (req, res, next) => {
       if (cycleCheck.hasCycle) {
         return res.status(400).json({
           success: false,
-          message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}`,
+          message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' â†’ ')}`,
           cycleChain: cycleCheck.cycleChain
         });
       }
@@ -259,7 +259,7 @@ export const updateTask = async (req, res, next) => {
       if (cycleCheck.hasCycle) {
         return res.status(400).json({
           success: false,
-          message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}`,
+          message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' â†’ ')}`,
           cycleChain: cycleCheck.cycleChain
         });
       }
@@ -279,7 +279,7 @@ export const updateTask = async (req, res, next) => {
     if (status !== undefined && status !== task.status) {
       const validation = canMoveTask(updatedTaskPreview, status, allTasks);
       if (!validation.allowed) {
-        await recordActivity(`Blocked: "${task.title}" → ${status} (dependency not met)`, 'blocked');
+        await recordActivity(`Blocked: "${task.title}" â†’ ${status} (dependency not met)`, 'blocked');
         return res.status(400).json({
           success: false,
           message: validation.reason,
@@ -323,7 +323,7 @@ export const updateTask = async (req, res, next) => {
 
     // Activity logging
     if (statusChanged) {
-      await recordActivity(`"${task.title}": ${oldStatus} → ${task.status}`, 'move');
+      await recordActivity(`"${task.title}": ${oldStatus} â†’ ${task.status}`, 'move');
       if (task.status === 'Done') {
         const newlyUnlocked = propagation.affectedDependents.filter(d => !d.locked);
         for (const u of newlyUnlocked) {
@@ -482,3 +482,4 @@ export const importTasks = async (req, res, next) => {
     next(error);
   }
 };
+
