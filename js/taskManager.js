@@ -188,12 +188,27 @@ class TaskManager {
   }
 
   addTask(taskData) {
+    if (!taskData || typeof taskData !== 'object' || Array.isArray(taskData)) {
+      return { success: false, message: 'Invalid task data.' };
+    }
+
+    if (typeof taskData.title !== 'string' || !taskData.title.trim()) {
+      return { success: false, message: 'Task title is required.' };
+    }
+
+    if (taskData.priority !== undefined && !['High', 'Medium', 'Low'].includes(taskData.priority)) {
+      return { success: false, message: 'Invalid task priority.' };
+    }
+
+    if (taskData.status !== undefined && !['Backlog', 'Todo', 'In Progress', 'Done'].includes(taskData.status)) {
+      return { success: false, message: 'Invalid task status.' };
+    }
     const dependsOn = Array.isArray(taskData.dependsOn) ? [...taskData.dependsOn] : [];
     if (dependsOn.length > 0) {
       const tempId = generateId();
       const cycleCheck = detectCycle(tempId, dependsOn, this.tasks);
       if (cycleCheck.hasCycle) {
-        return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}` };
+        return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' â†’ ')}` };
       }
     }
 
@@ -220,8 +235,38 @@ class TaskManager {
 
   updateTask(taskId, updatedFields) {
     const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+
     if (taskIndex === -1) {
       return { success: false, message: 'Task not found.' };
+    }
+
+    if (!updatedFields || typeof updatedFields !== 'object' || Array.isArray(updatedFields)) {
+      return { success: false, message: 'Invalid update data.' };
+    }
+
+    if (Object.keys(updatedFields).length === 0) {
+      return { success: false, message: 'No task changes provided.' };
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(updatedFields, 'title') &&
+      (typeof updatedFields.title !== 'string' || !updatedFields.title.trim())
+    ) {
+      return { success: false, message: 'Task title cannot be empty.' };
+    }
+
+    if (
+      updatedFields.priority !== undefined &&
+      !['High', 'Medium', 'Low'].includes(updatedFields.priority)
+    ) {
+      return { success: false, message: 'Invalid task priority.' };
+    }
+
+    if (
+      updatedFields.status !== undefined &&
+      !['Backlog', 'Todo', 'In Progress', 'Done'].includes(updatedFields.status)
+    ) {
+      return { success: false, message: 'Invalid task status.' };
     }
 
     const currentTask = this.tasks[taskIndex];
@@ -230,9 +275,13 @@ class TaskManager {
       if (updatedFields.dependsOn.includes(taskId)) {
         return { success: false, message: 'A task cannot depend on itself.' };
       }
+
       const cycleCheck = detectCycle(taskId, updatedFields.dependsOn, this.tasks);
       if (cycleCheck.hasCycle) {
-        return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}` };
+        return {
+          success: false,
+          message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}`
+        };
       }
     }
 
@@ -248,6 +297,7 @@ class TaskManager {
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
     this.logActivity(`Updated task "${updatedTask.title}"`, 'edit');
+
     return { success: true, task: this.getTaskById(taskId) };
   }
 
@@ -263,7 +313,7 @@ class TaskManager {
 
     const validation = canMoveTask(task, newStatus, this.tasks);
     if (!validation.allowed) {
-      this.logActivity(`Blocked: "${task.title}" → ${newStatus} (dependency not met)`, 'blocked');
+      this.logActivity(`Blocked: "${task.title}" â†’ ${newStatus} (dependency not met)`, 'blocked');
       return {
         success: false,
         message: validation.reason,
@@ -281,7 +331,7 @@ class TaskManager {
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
 
-    this.logActivity(`"${task.title}": ${oldStatus} → ${newStatus}`, 'move');
+    this.logActivity(`"${task.title}": ${oldStatus} â†’ ${newStatus}`, 'move');
 
     if (newStatus === 'Done') {
       const unlocked = propagation.affectedDependents.filter(d => !d.locked);
@@ -404,3 +454,4 @@ class TaskManager {
 }
 
 export const taskManager = new TaskManager();
+
