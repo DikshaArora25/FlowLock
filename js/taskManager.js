@@ -1,4 +1,4 @@
-﻿import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
+import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
 import { recalculateLocks, detectCycle, propagateDependencyState, canMoveTask } from './dependencyEngine.js';
 import { generateId } from './utils.js';
 
@@ -235,8 +235,38 @@ class TaskManager {
 
   updateTask(taskId, updatedFields) {
     const taskIndex = this.tasks.findIndex(t => t.id === taskId);
+
     if (taskIndex === -1) {
       return { success: false, message: 'Task not found.' };
+    }
+
+    if (!updatedFields || typeof updatedFields !== 'object' || Array.isArray(updatedFields)) {
+      return { success: false, message: 'Invalid update data.' };
+    }
+
+    if (Object.keys(updatedFields).length === 0) {
+      return { success: false, message: 'No task changes provided.' };
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(updatedFields, 'title') &&
+      (typeof updatedFields.title !== 'string' || !updatedFields.title.trim())
+    ) {
+      return { success: false, message: 'Task title cannot be empty.' };
+    }
+
+    if (
+      updatedFields.priority !== undefined &&
+      !['High', 'Medium', 'Low'].includes(updatedFields.priority)
+    ) {
+      return { success: false, message: 'Invalid task priority.' };
+    }
+
+    if (
+      updatedFields.status !== undefined &&
+      !['Backlog', 'Todo', 'In Progress', 'Done'].includes(updatedFields.status)
+    ) {
+      return { success: false, message: 'Invalid task status.' };
     }
 
     const currentTask = this.tasks[taskIndex];
@@ -245,9 +275,13 @@ class TaskManager {
       if (updatedFields.dependsOn.includes(taskId)) {
         return { success: false, message: 'A task cannot depend on itself.' };
       }
+
       const cycleCheck = detectCycle(taskId, updatedFields.dependsOn, this.tasks);
       if (cycleCheck.hasCycle) {
-        return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' â†’ ')}` };
+        return {
+          success: false,
+          message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}`
+        };
       }
     }
 
@@ -263,6 +297,7 @@ class TaskManager {
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
     this.logActivity(`Updated task "${updatedTask.title}"`, 'edit');
+
     return { success: true, task: this.getTaskById(taskId) };
   }
 
