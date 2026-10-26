@@ -1,4 +1,4 @@
-import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
+﻿import { saveTasks, loadTasks, saveActivityLog, loadActivityLog } from './storage.js';
 import { recalculateLocks, detectCycle, propagateDependencyState, canMoveTask } from './dependencyEngine.js';
 import { generateId } from './utils.js';
 
@@ -188,12 +188,27 @@ class TaskManager {
   }
 
   addTask(taskData) {
+    if (!taskData || typeof taskData !== 'object' || Array.isArray(taskData)) {
+      return { success: false, message: 'Invalid task data.' };
+    }
+
+    if (typeof taskData.title !== 'string' || !taskData.title.trim()) {
+      return { success: false, message: 'Task title is required.' };
+    }
+
+    if (taskData.priority !== undefined && !['High', 'Medium', 'Low'].includes(taskData.priority)) {
+      return { success: false, message: 'Invalid task priority.' };
+    }
+
+    if (taskData.status !== undefined && !['Backlog', 'Todo', 'In Progress', 'Done'].includes(taskData.status)) {
+      return { success: false, message: 'Invalid task status.' };
+    }
     const dependsOn = Array.isArray(taskData.dependsOn) ? [...taskData.dependsOn] : [];
     if (dependsOn.length > 0) {
       const tempId = generateId();
       const cycleCheck = detectCycle(tempId, dependsOn, this.tasks);
       if (cycleCheck.hasCycle) {
-        return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' → ')}` };
+        return { success: false, message: `Circular dependency detected: ${cycleCheck.cycleChain.join(' â†’ ')}` };
       }
     }
 
@@ -232,7 +247,7 @@ class TaskManager {
       }
       const cycleCheck = detectCycle(taskId, updatedFields.dependsOn, this.tasks);
       if (cycleCheck.hasCycle) {
-        return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' → ')}` };
+        return { success: false, message: `Circular dependency: ${cycleCheck.cycleChain.join(' â†’ ')}` };
       }
     }
 
@@ -263,7 +278,7 @@ class TaskManager {
 
     const validation = canMoveTask(task, newStatus, this.tasks);
     if (!validation.allowed) {
-      this.logActivity(`Blocked: "${task.title}" → ${newStatus} (dependency not met)`, 'blocked');
+      this.logActivity(`Blocked: "${task.title}" â†’ ${newStatus} (dependency not met)`, 'blocked');
       return {
         success: false,
         message: validation.reason,
@@ -281,7 +296,7 @@ class TaskManager {
     this.tasks = propagation.tasks;
     saveTasks(this.tasks);
 
-    this.logActivity(`"${task.title}": ${oldStatus} → ${newStatus}`, 'move');
+    this.logActivity(`"${task.title}": ${oldStatus} â†’ ${newStatus}`, 'move');
 
     if (newStatus === 'Done') {
       const unlocked = propagation.affectedDependents.filter(d => !d.locked);
@@ -404,3 +419,4 @@ class TaskManager {
 }
 
 export const taskManager = new TaskManager();
+
