@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowLock — Create Account</title>
+  <meta name="description" content="Create your FlowLock account to manage dependency-aware projects.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page-body">
+
+  <div class="auth-split-layout">
+    
+    <div class="auth-hero-pane">
+      <div class="auth-hero-content">
+        <a href="index.html" class="auth-hero-logo">
+          <span class="auth-hero-logo-icon">🔒</span>
+          <span class="auth-hero-logo-text">FlowLock</span>
+        </a>
+
+        <div class="auth-hero-quote">
+          <h2 class="auth-hero-heading">
+            Join thousands of engineers building constraint-safe projects.
+          </h2>
+          <p class="auth-hero-sub">
+            Set up your workspace in seconds. Connect task dependencies, prevent circular bottlenecks, and automate lock propagation.
+          </p>
+        </div>
+
+        <div class="auth-visual-card">
+          <div class="auth-visual-header">
+            <span class="visual-dot green"></span>
+            <span class="visual-dot yellow"></span>
+            <span class="visual-dot red"></span>
+            <span class="visual-title">Workspace Setup</span>
+          </div>
+          <div class="auth-feature-list">
+            <div class="auth-feature-item">✓ Real-time DAG Dependency Engine</div>
+            <div class="auth-feature-item">✓ Depth-First Search Cycle Protection</div>
+            <div class="auth-feature-item">✓ Anti-Cheat Drag & Drop Kanban</div>
+            <div class="auth-feature-item">✓ Full JSON Workspace Import & Export</div>
+          </div>
+        </div>
+
+        <div class="auth-hero-footer">
+          <span>© 2026 FlowLock SaaS. Dependency-aware task management system.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-form-pane">
+      <div class="auth-card-container">
+        
+        <div class="auth-form-header">
+          <h1 class="auth-form-title">Create Your Account</h1>
+          <p class="auth-form-subtitle">Get started with dependency-aware project management</p>
+        </div>
+        <form id="signupForm" class="auth-form-main" novalidate>
+          
+          <div class="form-group">
+            <label for="signupName" class="form-label">Full Name *</label>
+            <input 
+              type="text" 
+              id="signupName" 
+              class="form-input" 
+              placeholder="e.g., Diksha Arora" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="signupRole" class="form-label">Engineering Role</label>
+            <select id="signupRole" class="form-input">
+              <option value="Lead Engineer">Lead Engineer</option>
+              <option value="Senior Developer" selected>Senior Developer</option>
+              <option value="Frontend Engineer">Frontend Engineer</option>
+              <option value="Backend Engineer">Backend Engineer</option>
+              <option value="QA Engineer">QA Engineer</option>
+              <option value="Product Manager">Product Manager</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="signupEmail" class="form-label">Email Address *</label>
+            <input
+              type="email"
+              id="signupEmail"
+              name="email"
+              class="form-input"
+              autocomplete="username"
+              inputmode="email"
+              placeholder="you@example.com"
+              required
+            >
+            <div id="emailError" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label for="signupPassword" class="form-label">Password *</label>
+            </div>
+            <div class="password-input-group">
+              <input 
+                type="password" 
+                id="signupPassword" 
+                class="form-input" 
+                placeholder="Create secure password" 
+                required
+              >
+              <button type="button" id="toggleSignupPw" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide Password">
+                👁️
+              </button>
+            </div>
+
+            <div id="passwordStrengthContainer" class="password-strength-container" style="display: none;">
+              <div class="strength-header">
+                <span style="color: var(--text-dim);">Strength:</span>
+                <span id="strengthLabel" class="strength-label" style="color: #ef4444;">Weak</span>
+              </div>
+              <div class="strength-bar-track">
+                <div id="strengthBarFill" class="strength-bar-fill"></div>
+              </div>
+              <div class="strength-checklist">
+                <div id="crit-length" class="criteria-item"><span class="criteria-icon">○</span> 8+ Characters</div>
+                <div id="crit-upper" class="criteria-item"><span class="criteria-icon">○</span> Uppercase letter</div>
+                <div id="crit-lower" class="criteria-item"><span class="criteria-icon">○</span> Lowercase letter</div>
+                <div id="crit-number" class="criteria-item"><span class="criteria-icon">○</span> Number (0-9)</div>
+                <div id="crit-special" class="criteria-item" style="grid-column: span 2;"><span class="criteria-icon">○</span> Special character (!@#$%^&*)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="signupConfirmPassword" class="form-label">Confirm Password *</label>
+            <div class="password-input-group">
+              <input 
+                type="password" 
+                id="signupConfirmPassword" 
+                class="form-input" 
+                placeholder="Re-enter password" 
+                required
+              >
+              <button type="button" id="toggleConfirmPw" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide Password">
+                👁️
+              </button>
+            </div>
+            <div id="confirmPwError" class="field-error"></div>
+          </div>
+
+          <div id="signupError" class="form-error-banner" style="display: none;"></div>
+
+          <button type="submit" class="btn btn-primary auth-submit-btn">
+            Create Account & Launch Workspace ➔
+          </button>
+        </form>
+
+        <div class="auth-form-footer">
+          <p>Already have an account? <a href="login.html" class="auth-link">Sign In</a></p>
+          <p style="margin-top: 10px;">
+            <a href="index.html" style="font-weight: 500; font-size: 12px; color: var(--text-dim); text-decoration: none;">
+              ← Back to Product Overview
+            </a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import {
+      checkAuthGuard,
+      signupUser,
+      isValidEmail,
+      calculatePasswordStrength
+    } from './js/auth.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuthGuard('signup');
+
+      const form = document.getElementById('signupForm');
+      const errorEl = document.getElementById('signupError');
+      const emailInput = document.getElementById('signupEmail');
+      const emailError = document.getElementById('emailError');
+      const passwordInput = document.getElementById('signupPassword');
+      const confirmInput = document.getElementById('signupConfirmPassword');
+      const confirmError = document.getElementById('confirmPwError');
+      const toggleSignupPw = document.getElementById('toggleSignupPw');
+      const toggleConfirmPw = document.getElementById('toggleConfirmPw');
+
+      const strengthContainer = document.getElementById('passwordStrengthContainer');
+      const strengthLabel = document.getElementById('strengthLabel');
+      const strengthBarFill = document.getElementById('strengthBarFill');
+
+      if (toggleSignupPw) {
+        toggleSignupPw.addEventListener('click', () => {
+          const isPw = passwordInput.type === 'password';
+          passwordInput.type = isPw ? 'text' : 'password';
+          toggleSignupPw.textContent = isPw ? '🙈' : '👁️';
+        });
+      }
+
+      if (toggleConfirmPw) {
+        toggleConfirmPw.addEventListener('click', () => {
+          const isPw = confirmInput.type === 'password';
+          confirmInput.type = isPw ? 'text' : 'password';
+          toggleConfirmPw.textContent = isPw ? '🙈' : '👁️';
+        });
+      }
+
+      // Real-time password strength meter
+      passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        if (!val) {
+          strengthContainer.style.display = 'none';
+          return;
+        }
+
+        strengthContainer.style.display = 'flex';
+        const strength = calculatePasswordStrength(val);
+
+        strengthLabel.textContent = strength.label;
+        strengthLabel.style.color = strength.color;
+        strengthBarFill.style.width = `${strength.percent}%`;
+        strengthBarFill.style.backgroundColor = strength.color;
+
+        const setCrit = (id, met) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (met) {
+            el.classList.add('met');
+            el.querySelector('.criteria-icon').textContent = '✓';
+          } else {
+            el.classList.remove('met');
+            el.querySelector('.criteria-icon').textContent = '○';
+          }
+        };
+
+        setCrit('crit-length', strength.criteria.length);
+        setCrit('crit-upper', strength.criteria.upper);
+        setCrit('crit-lower', strength.criteria.lower);
+        setCrit('crit-number', strength.criteria.number);
+        setCrit('crit-special', strength.criteria.special);
+      });
+
+      // Email live validation
+      emailInput.addEventListener('input', () => {
+        const email = emailInput.value.trim();
+        if (email === '') {
+          emailInput.classList.remove('input-error');
+          emailError.textContent = '';
+          emailError.classList.remove('active');
+          return;
+        }
+
+        if (!isValidEmail(email)) {
+          emailInput.classList.add('input-error');
+          emailError.textContent = 'Please enter a valid email address.';
+          emailError.classList.add('active');
+        } else {
+          emailInput.classList.remove('input-error');
+          emailError.textContent = '';
+          emailError.classList.remove('active');
+        }
+      });
+
+      // Confirm password live check
+      confirmInput.addEventListener('input', () => {
+        if (confirmInput.value && confirmInput.value !== passwordInput.value) {
+          confirmError.textContent = 'Passwords do not match.';
+          confirmError.classList.add('active');
+        } else {
+          confirmError.textContent = '';
+          confirmError.classList.remove('active');
+        }
+      });
+
+      // Form Submit
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+
+        const name = document.getElementById('signupName').value.trim();
+        const role = document.getElementById('signupRole').value;
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmInput.value;
+
+        if (!isValidEmail(email)) {
+          emailInput.classList.add('input-error');
+          emailError.textContent = 'Please enter a valid email address.';
+          emailError.classList.add('active');
+          emailInput.focus();
+          return;
+        }
+
+        const result = await signupUser({
+          name,
+          role,
+          email,
+          password,
+          confirmPassword
+        });
+
+        if (result.success) {
+          window.location.href = 'login.html?registered=1';
+          return;
+        }
+
+        errorEl.textContent = result.message || 'Registration failed.';
+        errorEl.style.display = 'block';
+        errorEl.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
