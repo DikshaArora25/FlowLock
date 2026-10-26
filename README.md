@@ -1,189 +1,229 @@
-# FlowLock
+# FlowLock — Local Full-Stack Upgrade
 
-> Dependencies decide what moves next.
+FlowLock is a dependency-aware task management application and Kanban board featuring graph cycle detection, algorithmic lock propagation, and workflow anti-cheat rules.
 
-FlowLock is a real-time, dependency-aware project management workspace that prevents engineering teams from starting blocked work. Traditional Kanban boards allow tasks to be dragged into active states regardless of whether prerequisite work is complete. FlowLock enforces an algorithmic graph validation engine to block status movement until all dependencies reach **Done**.
-
----
-
-## Overview
-
-Modern software teams suffer from premature task execution — developers pick up frontend integration tasks before backend APIs exist, or deploy services before integration tests pass. FlowLock introduces directed graph dependency enforcement natively into the Kanban workflow, ensuring tasks remain locked until all prerequisite dependencies are satisfied.
+This upgrade transforms the original client-only frontend into a decoupled, production-grade full-stack architecture backed by Node.js, Express.js, and MongoDB (via Mongoose).
 
 ---
 
-## The Problem
+## 1. Project Architecture
 
-Standard task management platforms (Trello, Jira) treat tasks as independent cards:
-- Tasks can be moved to **In Progress** or **Done** regardless of incomplete prerequisites.
-- No dynamic lock calculation or anti-cheat protection.
-- Dependency chains are purely informational, leading to broken sprints and unblocked invalid work.
+FlowLock separates concerns into a clean Model-View-Controller (MVC) pattern:
 
----
-
-## The Solution
-
-FlowLock integrates a **Directed Dependency Graph Engine**:
-- **Automated Locking**: Tasks retain explicit dependency references (`dependsOn: []`). A task is algorithmically **LOCKED** until every dependency reaches **Done**.
-- **Anti-Cheat Enforcement**: Dragging a locked task into *In Progress* or *Done* is intercepted and rejected with interactive dependency feedback.
-- **Topological Lock Propagation**: When a prerequisite task is completed, lock states propagate downstream, automatically unlocking ready tasks.
-- **Graph Cycle Detection**: Prevents circular dependencies (`A → B → C → A`) before saving graph state.
-
----
-
-## Key Features
-
-- 🔒 **Algorithmic Lock Engine**: Dynamic lock calculation across task trees.
-- 🔄 **DFS Cycle Detection**: Graph cycle prevention using Depth-First Search traversal.
-- ⚡ **Anti-Cheat Status Protection**: Native browser drag-and-drop movement rejection with card shake feedback.
-- 🌊 **Cascading Lock Propagation**: Live lock recalculation on task status transitions.
-- 📊 **Real-Time Workspace Metrics**: Dynamic statistics for Unblocked Health %, Total, Todo, In Progress, Done, and Locked Tasks.
-- 🔍 **Dependency Inspector**: Interactive visual node representation of completed (🟢), pending (🟡), blocking (🔴), and current (🔵) dependency steps.
-- 📥 **JSON Workspace Persistence**: Board export and schema-validated JSON import.
-- 🌙 **Dark / Light SaaS UI**: Modern design tokens, responsive layout, glassmorphism card styling.
-
----
-
-## Dependency Engine
-
-The dependency engine treats the task collection as a directed graph $G = (V, E)$, where $V$ represents tasks and $E$ represents directed dependency edges $u \rightarrow v$ ($u$ depends on $v$).
-
-### Topological Lock Calculation
-A task $T$ is evaluated as locked if:
-
-$$\text{Locked}(T) = \exists \, D \in T.\text{dependsOn} \quad \text{such that} \quad \text{Status}(D) \neq \text{'Done'}$$
-
-```
-[ Task A: Database Design (Done) 🟢 ]
-                 ↓
-[ Task B: Backend API (Done) 🟢 ]
-                 ↓
-[ Task C: Authentication (In Progress) 🟡 ]
-                 ↓
-[ Task D: Frontend Integration (LOCKED) 🔒 ]
-```
-
----
-
-## Cycle Detection
-
-Before adding an edge $T_{\text{target}} \rightarrow T_{\text{dependency}}$, FlowLock runs Depth-First Search (DFS) traversal starting from $T_{\text{dependency}}$. If $T_{\text{target}}$ is reachable, a cycle is detected and aborted:
-
-$$\text{Cycle Condition: } \exists \text{ path } P \text{ from } T_{\text{dependency}} \rightarrow T_{\text{target}}$$
-
-The application displays the detected cycle chain: `A → B → C → A`.
-
----
-
-## Lock / Unlock Propagation
-
-When task $T$ transitions to **Done**:
-1. FlowLock updates $T.\text{status} = \text{'Done'}$.
-2. The engine identifies all tasks where $T \in \text{dependsOn}$.
-3. Downstream tasks recalculate their `locked` status.
-4. Tasks whose remaining dependencies are all `Done` automatically transition to **UNLOCKED**.
-
----
-
-## Architecture
-
-FlowLock is built using a clean, decoupled client-side architecture separating Business Logic, State Management, Storage, Validation, and UI Rendering:
+- **View Layer (`frontend/`)**: Pure semantic HTML5, modern responsive CSS3, and vanilla ES6 modules. Preserves all original UI layouts, theme preferences, session guards, and interactive Kanban behaviors without introducing heavyweight UI frameworks.
+- **Client API Layer (`frontend/js/api.js`)**: Centralized HTTP client handling RESTful communication with the Express backend, normalizing errors, parsing JSON, and maintaining connection resiliency.
+- **Controller & Business Logic (`express/controllers/`, `express/services/`)**: Enforces task validation, DFS cycle detection, lock recalculation, and status transition rules independently on the server.
+- **Data Access & Storage (`express/models/`, `express/config/`)**: Mongoose schemas defining models for Tasks and Activities, persisting data to MongoDB.
 
 ```mermaid
-graph TD
-    UI[UI Rendering & Modals - ui.js] <--> App[App Event Controller - app.js]
-    App <--> Manager[State Store - taskManager.js]
-    Manager <--> Engine[Dependency Engine - dependencyEngine.js]
-    Manager <--> Storage[Storage Abstraction - storage.js]
-    App <--> Validation[Validation Layer - validation.js]
-    App <--> Auth[Auth Service - auth.js]
+flowchart TD
+    subgraph Frontend ["Frontend (View Layer)"]
+        UI["Kanban Board / Tasks UI"]
+        TM["taskManager.js"]
+        API["api.js (REST Client)"]
+        UI --> TM
+        TM --> API
+    end
+
+    subgraph Backend ["Express MVC Backend"]
+        ROUTER["Express Routers (/api/*)"]
+        MW["Validation & Error Middleware"]
+        TC["taskController & activityController"]
+        DE["dependencyEngine (DFS & Lock Rules)"]
+        ROUTER --> MW --> TC
+        TC --> DE
+    end
+
+    subgraph Database ["Authoritative Database"]
+        MONGO[("MongoDB (Tasks & Activity)")]
+        TC --> MONGO
+    end
+
+    API -- "HTTP JSON (Port 5000)" --> ROUTER
 ```
 
 ---
 
-## Tech Stack
+## 2. Directory Structure
 
-- **Frontend**: HTML5, Vanilla CSS3 (Custom Design Tokens, Dark/Light Themes)
-- **Logic & Graph Algorithms**: Modular Vanilla JavaScript (ES6 Modules)
-- **Persistence**: Browser `localStorage` (Tasks, Activity Log, Preferences)
-- **Session Auth**: Browser `sessionStorage` (Demo Workspace Auth)
-
----
-
-## Project Structure
-
+```text
+FlowLock-Local/
+├── frontend/                     # Preserved frontend view layer
+│   ├── activity.html             # Real-time activity timeline
+│   ├── dashboard.html            # Main Kanban board & metrics
+│   ├── index.html                # Product landing page
+│   ├── login.html                # User login experience
+│   ├── profile.html              # User profile & session details
+│   ├── signup.html               # Registration experience
+│   ├── styles.css                # Global design system & theme styling
+│   ├── tasks.html                # Filterable tasks table view
+│   ├── docs/                     # Project technical documentation
+│   └── js/
+│       ├── api.js                # Centralized REST API client
+│       ├── app.js                # Dashboard controller & Kanban bindings
+│       ├── auth.js               # Client auth guard & session handling
+│       ├── dependencyEngine.js   # Client-side graph helper
+│       ├── landing.js            # Landing page interactivity
+│       ├── storage.js            # LocalStorage for preferences & sessions
+│       ├── taskManager.js        # Authoritative state manager talking to API
+│       ├── ui.js                 # DOM renderers & modals
+│       ├── utils.js              # Formatting, XSS escaping, debounce, toast
+│       └── validation.js         # Client-side form validation
+├── express/                      # Express MVC backend application
+│   ├── .env                      # Local environment configuration
+│   ├── .env.example              # Environment variables template
+│   ├── package.json              # Backend dependencies & npm scripts
+│   ├── server.js                 # DB initialization and server listener
+│   ├── app.js                    # Express app, middleware, & route mounting
+│   ├── config/
+│   │   ├── db.js                 # Mongoose connection & lifecycle handlers
+│   │   └── seedData.js           # Initial 10 demo tasks seed dataset
+│   ├── controllers/
+│   │   ├── activityController.js # Activity log endpoints
+│   │   └── taskController.js     # Task CRUD, cycle checks, lock propagation
+│   ├── middleware/
+│   │   ├── errorHandler.js       # Centralized error & 404 middleware
+│   │   └── validateTask.js       # Request body validation middleware
+│   ├── models/
+│   │   ├── Activity.js           # Activity log Mongoose schema
+│   │   └── Task.js               # Task model with dependency relationships
+│   ├── routes/
+│   │   ├── activityRoutes.js     # /api/activity routes
+│   │   ├── healthRoutes.js       # /api/health route
+│   │   └── taskRoutes.js         # /api/tasks routes
+│   ├── services/
+│   │   └── dependencyEngine.js   # Server-side cycle detection & lock engine
+│   └── tests/
+│       └── task.test.js          # Automated backend integration test suite
+├── postman/
+│   └── FlowLock-API.postman_collection.json # API testing collection
+├── .gitignore                    # Git ignore rules
+├── IMPLEMENTATION_STATUS.md       # Stage-by-stage implementation tracker
+└── README.md                     # Setup and project documentation
 ```
-kanbanaproject/
-├── index.html           # Login screen & SessionStorage auth entry point
-├── dashboard.html       # Main FlowLock Workspace & Kanban Board
-├── styles.css           # SaaS CSS Design System
-├── js/
-│   ├── utils.js            # ID generation, date formatters, toast alerts
-│   ├── storage.js          # LocalStorage & SessionStorage encapsulation, JSON import/export
-│   ├── auth.js             # Session authentication state & route guard
-│   ├── dependencyEngine.js # DFS cycle detection, topological locking & lock propagation
-│   ├── taskManager.js      # Central state store (CRUD, search, filter, sort, activity log)
-│   ├── validation.js       # Form validation logic & status transition rules
-│   ├── ui.js               # Render engine (Kanban columns, cards, Dependency Inspector)
-│   └── app.js              # Application controller, event listeners, drag & drop handlers
-└── README.md            # Product documentation
+
+---
+
+## 3. MongoDB Configuration
+
+The backend connects to MongoDB using Mongoose.
+
+1. Ensure MongoDB Server is running locally (default: `mongodb://127.0.0.1:27017/flowlock`), or provide a MongoDB Atlas connection string.
+2. Configure your environment variables in `express/.env`:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb://127.0.0.1:27017/flowlock
+FRONTEND_URL=http://localhost:3000
 ```
 
----
-
-## Getting Started
-
-1. Clone or download the repository:
-   ```bash
-   git clone https://github.com/username/flowlock.git
-   cd flowlock
-   ```
-2. Serve the static directory using any local web server:
-   ```bash
-   npx serve .
-   # or
-   python -m http.server 8000
-   ```
-3. Open `http://localhost:8000/index.html` in your browser.
+> **Auto-Seeding**: If the connected MongoDB database is empty upon startup, the server automatically seeds the initial 10 demo tasks into the `tasks` collection and recalculates all locks.
 
 ---
 
-## Usage
+## 4. Local Execution Instructions
 
-### Demo Credentials
-- **Email**: `demo@flowlock.app`
-- **Password**: `flowlock123`
+### Prerequisites
+- Node.js (v18+ or v20+ recommended)
+- MongoDB Server running locally or an accessible MongoDB Atlas URI
 
-### Key Interactions
-- **Drag and Drop**: Drag tasks across columns. Dragging a locked task to *In Progress* triggers anti-cheat protection.
-- **Inspect Graph**: Click **"Inspect Graph"** on any task card to open the visual dependency inspector.
-- **Quick Actions**: Use the header controls to simulate blocked moves, complete prerequisite tasks, or reset the workspace.
+### Step 1: Install Backend Dependencies
+Open a terminal and navigate to the `express/` folder:
+
+```bash
+cd express
+npm install
+```
+
+### Step 2: Start the Express Backend
+
+**Development mode (with auto-reload):**
+```bash
+npm run dev
+```
+
+**Production mode:**
+```bash
+npm start
+```
+
+The server will start listening on port `5000`:
+- Health check: `http://localhost:5000/api/health`
+- Tasks API: `http://localhost:5000/api/tasks`
+
+### Step 3: Open the Frontend
+
+The Express server serves the static frontend directly from `http://localhost:5000/`.
+Alternatively, you can serve `frontend/` using any static HTTP server or Live Server:
+
+```bash
+# Optional: run a local static web server for the frontend
+npx serve ../frontend -l 3000
+```
+Open `http://localhost:5000` (or `http://localhost:3000/dashboard.html`) in your browser.
 
 ---
 
-## Screenshots
+## 5. API Reference
 
-*(Include screenshots of Dashboard, Dependency Inspector Modal, Dark Mode, and Anti-Cheat Lock Notification)*
+All responses return standard JSON format.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Check server and MongoDB connection health |
+| `GET` | `/api/tasks` | Fetch all tasks (supports `?search=`, `?status=`, `?sortBy=`) |
+| `GET` | `/api/tasks/:id` | Fetch a single task by custom ID or MongoDB `_id` |
+| `POST` | `/api/tasks` | Create a new task (validates cycle and initial locks) |
+| `PATCH` | `/api/tasks/:id` | Update task fields/status (enforces dependency & lock rules) |
+| `DELETE` | `/api/tasks/:id` | Delete task (requires `?force=true` if other tasks depend on it) |
+| `POST` | `/api/tasks/reset-demo` | Reset database to pristine 10-task demo workspace |
+| `POST` | `/api/tasks/import` | Bulk import an array of tasks into MongoDB |
+| `GET` | `/api/activity` | Fetch recent workspace activity events (`?limit=50`) |
+| `POST` | `/api/activity` | Record custom activity entry |
+| `DELETE` | `/api/activity` | Clear activity log |
+
+### Dependency Rules Enforced by Backend
+1. **Blocked Task Anti-Cheat**: A task cannot be moved to `In Progress` or `Done` while any of its prerequisite dependencies have a status other than `Done`. Direct API requests attempting this return `400 Bad Request`.
+2. **Circular Dependency Prevention**: Adding a dependency that forms a cycle (e.g., A → B → A) is rejected with `400 Bad Request` and returns the `cycleChain`.
+3. **Invalid Reference Guard**: Referencing a non-existent task ID in `dependsOn` returns `400 Bad Request`.
+4. **Cascading Lock Recalculation**: Completing a prerequisite task automatically recalculates downstream locks and unblocks dependent tasks.
+5. **Delete Guard**: Deleting a prerequisite task required by other tasks returns `409 Conflict` unless forced with `?force=true`. When forced, references are cleaned up across all dependent tasks.
 
 ---
 
-## Testing
+## 6. Testing Instructions
 
-FlowLock includes a built-in automated test suite covering:
-1. **Cycle Detection**: Validates DFS recursion path detection (`A → B → C → A`).
-2. **Lock Calculation**: Validates single, multi-level, and branching dependency locks.
-3. **Lock Propagation**: Validates cascading un-locking down dependent chains.
-4. **Anti-Cheat Validation**: Validates rejection of illegal status moves.
+### Automated Backend Tests
+An automated integration test suite is included in `express/tests/task.test.js`.
+To run tests:
+
+```bash
+cd express
+npm test
+```
+
+The test suite exercises:
+- Health check and DB connectivity
+- Initial demo seeding and task retrieval
+- Task creation and input validation (empty title, invalid references)
+- Status change anti-cheat rules on locked tasks
+- Self-dependency and cycle chain rejection
+- Delete confirmation guards and cascading reference cleanup
+- Activity history tracking
+
+### Postman API Testing
+1. Launch Postman.
+2. Click **Import** and select `postman/FlowLock-API.postman_collection.json`.
+3. Verify collection variable `baseUrl` is set to `http://localhost:5000`.
+4. Run individual requests or execute the full collection using the Postman Collection Runner.
 
 ---
 
-## Technical Decisions
+## 7. Future Deployment Steps (Preparation Only)
 
-- **Zero External Dependencies**: Implemented native HTML5 Drag and Drop and custom DFS graph algorithms without third-party frameworks to maintain maximum performance and zero package overhead.
-- **Modular ES Architecture**: Decoupled state management from DOM rendering so the dependency engine can be extracted into an Express REST API backend or React frontend in future iterations.
-
----
-
-## Why FlowLock?
-
-FlowLock turns passive task lists into active, dependency-aware workflows. By enforcing task prerequisites algorithmically, engineering teams save time, eliminate blocked sprints, and ensure software deliverables are built in logical order.
+To deploy to production in the future:
+1. **Database**: Provision a MongoDB Atlas cluster and whitelist production server IP addresses. Set `MONGODB_URI` in production environment variables.
+2. **Backend**: Deploy `express/` to a Node.js cloud provider (Render, Railway, AWS ECS, or Fly.io). Set `NODE_ENV=production` and `PORT=80` or `443`.
+3. **Frontend**: Host static files on Vercel, Netlify, AWS S3/CloudFront, or continue serving statically through Express. Set `window.FLOWLOCK_API_URL` or `flowlock_api_url` in localStorage to point to the production API origin.
+4. **Security**: Add rate limiting (`express-rate-limit`), security headers (`helmet`), and TLS/HTTPS termination.
