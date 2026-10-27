@@ -1,7 +1,9 @@
 import express from 'express';
-import { getActivity, addActivity, clearActivity } from '../controllers/activityController.js';
+import { getActivity, getActivityStats, addActivity, clearActivity } from '../controllers/activityController.js';
 
 const router = express.Router();
+
+router.get('/stats', getActivityStats);
 
 router.route('/')
   .get(getActivity)
