@@ -33,13 +33,11 @@ describe('FlowLock Authentication API Tests', () => {
       });
     });
 
-    // Clean up any lingering test user
-    await User.deleteMany({ email: { $regex: /@flowlock\.test$/i } });
+    await User.deleteMany({ email: TEST_USER.email.toLowerCase() });
   });
 
   after(async () => {
-    // Clean up test user created during the suite
-    await User.deleteMany({ email: { $regex: /@flowlock\.test$/i } });
+    await User.deleteMany({ email: TEST_USER.email.toLowerCase() });
 
     if (server) {
       await new Promise(resolve => server.close(resolve));
@@ -109,6 +107,7 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.user.name, TEST_USER.name);
     assert.equal(body.user.role, TEST_USER.role);
     assert.equal(body.user.password, undefined, 'Password hash must NEVER be exposed');
+    assert.equal(body.user.passwordHash, undefined, 'Password hash aliases must never be exposed');
 
     // Verify in MongoDB that password was actually hashed with bcrypt
     const dbUser = await User.findOne({ email: TEST_USER.email.toLowerCase() }).select('+password');
@@ -128,6 +127,18 @@ describe('FlowLock Authentication API Tests', () => {
     const body = await res.json();
     assert.equal(body.success, false);
     assert.ok(body.message.includes('already exists'));
+  });
+
+  test('5a. Treat email addresses as case-insensitive during duplicate registration', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...TEST_USER, email: TEST_USER.email.toUpperCase() })
+    });
+
+    assert.equal(res.status, 409);
+    const body = await res.json();
+    assert.equal(body.success, false);
   });
 
   test('6. Reject login with non-existent email (POST /api/auth/login)', async () => {
@@ -150,7 +161,7 @@ describe('FlowLock Authentication API Tests', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: TEST_USER.email,
+        email: TEST_USER.email.toUpperCase(),
         password: 'WrongPassword999!'
       })
     });
