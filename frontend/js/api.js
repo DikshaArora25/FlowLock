@@ -51,6 +51,19 @@ async function apiRequest(endpoint, options = {}) {
     'Accept': 'application/json'
   };
 
+  // Automatically attach authenticated JWT Bearer token if present
+  if (typeof window !== 'undefined') {
+    try {
+      const rawSession = sessionStorage.getItem('flowlock_session_user') || localStorage.getItem('flowlock_session_user');
+      if (rawSession) {
+        const session = JSON.parse(rawSession);
+        if (session?.token && !options?.headers?.['Authorization'] && !options?.headers?.['authorization']) {
+          defaultHeaders['Authorization'] = `Bearer ${session.token}`;
+        }
+      }
+    } catch (_) {}
+  }
+
   const config = {
     ...options,
     headers: {
@@ -177,5 +190,23 @@ export const getMeAPI = async (token) => {
     headers: {
       Authorization: `Bearer ${token}`
     }
+  });
+};
+
+export const updateProfileAPI = async (profileData, token = null) => {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  return apiRequest('/auth/profile', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(profileData)
+  });
+};
+
+export const changePasswordAPI = async (passwordData, token = null) => {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  return apiRequest('/auth/password', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(passwordData)
   });
 };

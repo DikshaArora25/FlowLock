@@ -112,7 +112,18 @@ export const login = async (req, res, next) => {
     const cleanEmail = String(email).trim().toLowerCase();
 
     // Query user and explicitly select password field
-    const user = await User.findOne({ email: cleanEmail }).select('+password');
+    let user = await User.findOne({ email: cleanEmail }).select('+password');
+
+    // Auto-seed demo user in MongoDB Atlas if logging in as demo for the first time
+    if (!user && cleanEmail === 'demo@flowlock.app' && password === 'flowlock123') {
+      user = await User.create({
+        name: 'Diksha',
+        email: 'demo@flowlock.app',
+        password: 'flowlock123',
+        role: 'Lead Engineer'
+      });
+      console.log('[Auth] Auto-seeded demo user in MongoDB Atlas: demo@flowlock.app');
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -154,6 +165,99 @@ export const getMe = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       user: req.user.toJSON()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update authenticated user profile (name, role)
+ * @route   PUT /api/auth/profile
+ * @access  Private (Requires JWT)
+ */
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { name, role } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (name !== undefined) {
+      const cleanName = String(name).trim();
+      if (cleanName.length < 2) {
+        return res.status(400).json({ success: false, message: 'Full name must be at least 2 characters.' });
+      }
+      user.name = cleanName;
+    }
+
+    if (role !== undefined) {
+      user.role = String(role).trim() || 'Software Engineer';
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: user.toJSON()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Change authenticated user password
+ * @route   PUT /api/auth/password
+ * @access  Private (Requires JWT)
+ */
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required.'
+      });
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect.'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters long.'
+      });
+    }
+
+    const passwordComplexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!passwordComplexityRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must contain uppercase, lowercase, a number, and a special character.'
+      });
+    }
+
+    user.password = newPassword; // Will be hashed by pre-save hook
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password updated successfully'
     });
   } catch (error) {
     next(error);

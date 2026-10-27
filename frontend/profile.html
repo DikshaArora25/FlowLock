@@ -302,17 +302,24 @@
 
       // Handle Edit Profile Form
       const profileForm = document.getElementById('profileInfoForm');
-      profileForm.addEventListener('submit', (e) => {
+      profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('editFullName').value.trim();
         const role = document.getElementById('editRole').value;
 
-        const result = updateUserProfile({ name, role });
-        if (result.success) {
-          renderUserFields(result.user);
-          showToast('✓ Profile information updated successfully!', 'success');
-        } else {
-          showToast(`Error: ${result.message}`, 'error');
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+          const result = await updateUserProfile({ name, role });
+          if (result.success) {
+            renderUserFields(result.user);
+            showToast('✓ Profile information updated successfully!', 'success');
+          } else {
+            showToast(`Error: ${result.message}`, 'error');
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
         }
       });
 

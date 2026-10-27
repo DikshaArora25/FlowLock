@@ -211,4 +211,58 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.user.name, TEST_USER.name);
     assert.equal(body.user.password, undefined);
   });
+
+  test('12. Update user profile (PUT /api/auth/profile)', async () => {
+    assert.ok(authToken);
+    const res = await fetch(`${baseUrl}/api/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ name: 'Updated Engineer', role: 'Staff Engineer' })
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.user.name, 'Updated Engineer');
+    assert.equal(body.user.role, 'Staff Engineer');
+  });
+
+  test('13. Change user password and verify login with new password (PUT /api/auth/password)', async () => {
+    assert.ok(authToken);
+    const newPassword = 'NewSecretPassword99!';
+
+    const res = await fetch(`${baseUrl}/api/auth/password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        currentPassword: TEST_USER.password,
+        newPassword
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+
+    // Verify login with new password works
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: TEST_USER.email,
+        password: newPassword
+      })
+    });
+
+    assert.equal(loginRes.status, 200);
+    const loginBody = await loginRes.json();
+    assert.equal(loginBody.success, true);
+    assert.ok(loginBody.token);
+  });
 });
