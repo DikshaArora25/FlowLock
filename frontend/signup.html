@@ -95,7 +95,7 @@
               placeholder="you@example.com"
               required
             >
-            <div id="emailError" class="field-error"></div>
+            <div id="emailError" class="field-error" aria-live="polite"></div>
           </div>
 
           <div class="form-group">
@@ -147,10 +147,10 @@
                 👁️
               </button>
             </div>
-            <div id="confirmPwError" class="field-error"></div>
+            <div id="confirmPwError" class="field-error" aria-live="polite"></div>
           </div>
 
-          <div id="signupError" class="form-error-banner" style="display: none;"></div>
+          <div id="signupError" class="form-error-banner" aria-live="polite" style="display: none;"></div>
 
           <button type="submit" class="btn btn-primary auth-submit-btn">
             Create Account & Launch Workspace ➔
@@ -189,6 +189,7 @@
       const passwordInput = document.getElementById('signupPassword');
       const confirmInput = document.getElementById('signupConfirmPassword');
       const confirmError = document.getElementById('confirmPwError');
+      const submitBtn = form.querySelector('button[type="submit"]');
       const toggleSignupPw = document.getElementById('toggleSignupPw');
       const toggleConfirmPw = document.getElementById('toggleConfirmPw');
 
@@ -299,22 +300,27 @@
           return;
         }
 
-        const result = await signupUser({
-          name,
-          role,
-          email,
-          password,
-          confirmPassword
-        });
+        submitBtn.disabled = true;
+        try {
+          const result = await signupUser({
+            name,
+            role,
+            email,
+            password,
+            confirmPassword
+          });
 
-        if (result.success) {
-          window.location.href = 'login.html?registered=1';
-          return;
+          if (result.success) {
+            window.location.href = 'login.html?registered=1';
+            return;
+          }
+
+          errorEl.textContent = result.message || 'Registration failed.';
+          errorEl.style.display = 'block';
+          errorEl.classList.add('active');
+        } finally {
+          submitBtn.disabled = false;
         }
-
-        errorEl.textContent = result.message || 'Registration failed.';
-        errorEl.style.display = 'block';
-        errorEl.classList.add('active');
       });
     });
   </script>

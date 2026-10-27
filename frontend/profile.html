@@ -203,19 +203,19 @@
 
           <div class="profile-section-card">
             <div class="profile-section-header">
-              <h3 class="profile-section-title">Active Session & Encryption State</h3>
-              <p class="profile-section-subtitle">Cryptographic token lifecycle and persistence metadata</p>
+              <h3 class="profile-section-title">Active Session</h3>
+              <p class="profile-section-subtitle">Current sign-in status and session expiry</p>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <span style="color: var(--text-dim);">Session Token</span>
-                <span id="sessionTokenDisplay" class="session-info-badge">token-loading</span>
+                <span style="color: var(--text-dim);">Session Status</span>
+                <span id="sessionTokenDisplay" class="session-info-badge">Active</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <span style="color: var(--text-dim);">Authentication Engine</span>
-                <span style="font-weight: 600; color: var(--status-done);">PBKDF2-HMAC-SHA256 (100k iters)</span>
+                <span id="authEngineDisplay" style="font-weight: 600; color: var(--status-done);">bcrypt (server-side)</span>
               </div>
 
               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
@@ -269,8 +269,11 @@
         document.getElementById('displayEmail').value = u.email || '';
 
         // Session
-        const token = u.sessionToken || 'local-demo-token';
-        document.getElementById('sessionTokenDisplay').textContent = token.length > 20 ? `${token.substring(0, 18)}...` : token;
+        document.getElementById('sessionTokenDisplay').textContent = 'Active';
+        document.getElementById('authEngineDisplay').textContent =
+          u.id === 'demo-user' || u.token === 'local-fallback-token'
+            ? 'Local demo session'
+            : 'bcrypt (server-side)';
         document.getElementById('sessionLoggedInDisplay').textContent = u.loggedInAt ? new Date(u.loggedInAt).toLocaleString() : 'Active Session';
         document.getElementById('sessionExpiresDisplay').textContent = u.expiresAt ? new Date(u.expiresAt).toLocaleString() : '24 Hours';
       }
@@ -302,12 +305,12 @@
 
       // Handle Edit Profile Form
       const profileForm = document.getElementById('profileInfoForm');
-      profileForm.addEventListener('submit', (e) => {
+      profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('editFullName').value.trim();
         const role = document.getElementById('editRole').value;
 
-        const result = updateUserProfile({ name, role });
+        const result = await updateUserProfile({ name, role });
         if (result.success) {
           renderUserFields(result.user);
           showToast('✓ Profile information updated successfully!', 'success');

@@ -310,4 +310,100 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.user.name, TEST_USER.name);
     assert.equal(body.user.password, undefined);
   });
+
+  test('12. Update the authenticated profile without returning sensitive fields', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/me`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ name: 'Updated Test Engineer', role: 'QA Engineer' })
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.user.name, 'Updated Test Engineer');
+    assert.equal(body.user.role, 'QA Engineer');
+    assert.equal(body.user.password, undefined);
+  });
+
+  test('12a. Require authentication and validate profile fields before saving', async () => {
+    const unauthenticated = await fetch(`${baseUrl}/api/auth/me`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Updated Test Engineer', role: 'QA Engineer' })
+    });
+    assert.equal(unauthenticated.status, 401);
+
+    const invalidProfile = await fetch(`${baseUrl}/api/auth/me`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ name: 'N'.repeat(81), role: 'QA Engineer' })
+    });
+    assert.equal(invalidProfile.status, 400);
+  });
+
+  test('13. Change password only after verification and continue hiding the hash', async () => {
+    const invalidCurrentPassword = await fetch(`${baseUrl}/api/auth/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        currentPassword: 'WrongPassword999!',
+        newPassword: 'NewPassword123!'
+      })
+    });
+    assert.equal(invalidCurrentPassword.status, 400);
+
+    const weakNewPassword = await fetch(`${baseUrl}/api/auth/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        currentPassword: TEST_USER.password,
+        newPassword: 'weak'
+      })
+    });
+    assert.equal(weakNewPassword.status, 400);
+
+    const res = await fetch(`${baseUrl}/api/auth/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        currentPassword: TEST_USER.password,
+        newPassword: 'NewPassword123!'
+      })
+    });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).success, true);
+
+    const oldPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: TEST_USER.email, password: TEST_USER.password })
+    });
+    assert.equal(oldPasswordLogin.status, 401);
+
+    const newPasswordLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: TEST_USER.email, password: 'NewPassword123!' })
+    });
+    assert.equal(newPasswordLogin.status, 200);
+    const loginBody = await newPasswordLogin.json();
+    assert.equal(loginBody.user.password, undefined);
+    assert.equal(loginBody.user.passwordHash, undefined);
+  });
 });
