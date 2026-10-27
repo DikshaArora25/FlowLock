@@ -3,17 +3,26 @@
  * Authoritative connection to Express & MongoDB backend
  */
 
-// Configurable API Base URL (defaults to http://localhost:5000/api)
+import { ENV } from '../env.js';
+
+// Configurable API Base URL (driven by frontend/env.js or runtime overrides)
 const resolveBaseUrl = () => {
+  // 1. Check window-level overrides (injected scripts or tests)
   if (typeof window !== 'undefined') {
-    if (window.FLOWLOCK_API_URL) return window.FLOWLOCK_API_URL;
+    if (window.FLOWLOCK_API_URL) return window.FLOWLOCK_API_URL.replace(/\/+$/, '');
+    if (window.__ENV__?.API_BASE_URL) return window.__ENV__.API_BASE_URL.replace(/\/+$/, '');
+
+    // 2. Check localStorage override (allows dynamic testing without rebuilding)
     const stored = localStorage.getItem('flowlock_api_url');
-    if (stored) return stored;
-    // If frontend is served directly by express on same origin
-    if (window.location && window.location.port === '5000') {
-      return `${window.location.origin}/api`;
-    }
+    if (stored) return stored.replace(/\/+$/, '');
   }
+
+  // 3. Environment configuration from frontend/env.js
+  if (ENV?.API_BASE_URL) {
+    return ENV.API_BASE_URL.replace(/\/+$/, '');
+  }
+
+  // 4. Default fallback for local development
   return 'http://localhost:5000/api';
 };
 
@@ -42,7 +51,7 @@ async function apiRequest(endpoint, options = {}) {
     response = await fetch(url, config);
   } catch (networkError) {
     console.error('[API Network Error]', networkError);
-    const error = new Error(`Cannot connect to FlowLock backend at ${API_BASE_URL}. Ensure the Express server is running on port 5000.`);
+    const error = new Error(`Cannot connect to FlowLock backend at ${API_BASE_URL}. Ensure the backend service is running and CORS is permitted.`);
     error.isNetworkError = true;
     throw error;
   }
