@@ -191,9 +191,28 @@ export const signupUser = async ({
       role: cleanRole
     });
 
+    const now = Date.now();
+    const durationMs = 30 * 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(now + durationMs).toISOString();
+
+    const userSession = {
+      id: res.user.id || res.user._id,
+      email: res.user.email,
+      name: res.user.name,
+      role: res.user.role || cleanRole,
+      sessionToken: res.token,
+      token: res.token,
+      rememberMe: true,
+      createdAt: res.user.createdAt,
+      loggedInAt: new Date().toISOString(),
+      expiresAt
+    };
+
+    saveSessionUser(userSession, true);
+
     return {
       success: true,
-      user: res.user,
+      user: userSession,
       token: res.token
     };
   } catch (error) {

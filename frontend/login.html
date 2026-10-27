@@ -88,7 +88,6 @@
               id="loginEmail" 
               class="form-input" 
               placeholder="name@company.com" 
-              value="demo@flowlock.app" 
               required
             >
           </div>
@@ -102,8 +101,7 @@
                 type="password" 
                 id="loginPassword" 
                 class="form-input" 
-                placeholder="••••••••" 
-                value="flowlock123" 
+                placeholder="Enter your password" 
                 required
               >
               <button type="button" id="toggleLoginPw" class="btn-toggle-pw" aria-label="Toggle password visibility" title="Show/Hide Password">
@@ -148,19 +146,25 @@
       // Auth Guard for login page
       checkAuthGuard('login');
 
+      const form = document.getElementById('loginForm');
+      const errorEl = document.getElementById('loginError');
+      const quickDemoBtn = document.getElementById('quickDemoBtn');
+      const emailInput = document.getElementById('loginEmail');
+      const passwordInput = document.getElementById('loginPassword');
+      const togglePwBtn = document.getElementById('toggleLoginPw');
+
       // Check query parameters
       const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('email') && emailInput) {
+        emailInput.value = urlParams.get('email');
+        if (passwordInput) passwordInput.focus();
+      }
+
       if (urlParams.get('registered') === '1') {
         showToast('✓ Account created successfully! Please sign in.', 'success');
       } else if (urlParams.get('expired') === '1') {
         showToast('Your session has expired. Please sign in again.', 'info');
       }
-
-      const form = document.getElementById('loginForm');
-      const errorEl = document.getElementById('loginError');
-      const quickDemoBtn = document.getElementById('quickDemoBtn');
-      const passwordInput = document.getElementById('loginPassword');
-      const togglePwBtn = document.getElementById('toggleLoginPw');
 
       if (togglePwBtn && passwordInput) {
         togglePwBtn.addEventListener('click', () => {

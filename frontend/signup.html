@@ -299,22 +299,40 @@
           return;
         }
 
-        const result = await signupUser({
-          name,
-          role,
-          email,
-          password,
-          confirmPassword
-        });
-
-        if (result.success) {
-          window.location.href = 'login.html?registered=1';
-          return;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = 'Creating Account & Launching...';
         }
 
-        errorEl.textContent = result.message || 'Registration failed.';
-        errorEl.style.display = 'block';
-        errorEl.classList.add('active');
+        try {
+          const result = await signupUser({
+            name,
+            role,
+            email,
+            password,
+            confirmPassword
+          });
+
+          if (result.success) {
+            window.location.href = 'dashboard.html';
+            return;
+          }
+
+          errorEl.textContent = result.message || 'Registration failed.';
+          errorEl.style.display = 'block';
+          errorEl.classList.add('active');
+        } catch (err) {
+          errorEl.textContent = err.message || 'An unexpected error occurred. Please try again.';
+          errorEl.style.display = 'block';
+          errorEl.classList.add('active');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnText;
+          }
+        }
       });
     });
   </script>
