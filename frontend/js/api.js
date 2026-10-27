@@ -3,9 +3,9 @@
  * Authoritative connection to Express & MongoDB backend
  */
 
-import { ENV } from '../env.js';
+import { ENV, envReady } from '../env.js';
 
-// Configurable API Base URL (driven by frontend/env.js or runtime overrides)
+// Configurable API Base URL (driven by frontend/.env via env.js or runtime overrides)
 const resolveBaseUrl = () => {
   // 1. Check window-level overrides (injected scripts or tests)
   if (typeof window !== 'undefined') {
@@ -17,7 +17,7 @@ const resolveBaseUrl = () => {
     if (stored) return stored.replace(/\/+$/, '');
   }
 
-  // 3. Environment configuration from frontend/env.js
+  // 3. Environment configuration from frontend/.env via env.js
   if (ENV?.API_BASE_URL) {
     return ENV.API_BASE_URL.replace(/\/+$/, '');
   }
@@ -26,13 +26,26 @@ const resolveBaseUrl = () => {
   return 'http://localhost:5000/api';
 };
 
-export const API_BASE_URL = resolveBaseUrl();
+export let API_BASE_URL = resolveBaseUrl();
+
+// Automatically update API_BASE_URL once frontend/.env finishes loading
+if (envReady) {
+  envReady.then(() => {
+    API_BASE_URL = resolveBaseUrl();
+  });
+}
 
 /**
  * Low-level HTTP request dispatcher with error normalization
  */
 async function apiRequest(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  if (envReady) {
+    try {
+      await envReady;
+    } catch (_) {}
+  }
+  const currentBaseUrl = resolveBaseUrl();
+  const url = `${currentBaseUrl}${endpoint}`;
   const defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -51,7 +64,7 @@ async function apiRequest(endpoint, options = {}) {
     response = await fetch(url, config);
   } catch (networkError) {
     console.error('[API Network Error]', networkError);
-    const error = new Error(`Cannot connect to FlowLock backend at ${API_BASE_URL}. Ensure the backend service is running and CORS is permitted.`);
+    const error = new Error(`Cannot connect to FlowLock backend at ${currentBaseUrl}. Ensure the backend service is running and CORS is permitted.`);
     error.isNetworkError = true;
     throw error;
   }
