@@ -212,6 +212,26 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.success, false);
   });
 
+  test('7a. Do not normalize whitespace in passwords or coerce non-string values', async () => {
+    const wrongPassword = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: TEST_USER.email,
+        password: `${TEST_USER.password} `
+      })
+    });
+    assert.equal(wrongPassword.status, 401);
+
+    const invalidPassword = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: TEST_USER.email, password: 12345 })
+    });
+    assert.equal(invalidPassword.status, 400);
+    assert.equal((await invalidPassword.json()).success, false);
+  });
+
   test('8. Successfully login and return JWT token (POST /api/auth/login)', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',

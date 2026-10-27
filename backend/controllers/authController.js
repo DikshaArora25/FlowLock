@@ -20,7 +20,10 @@ const generateToken = (userId) => {
  */
 export const signup = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+      ? req.body
+      : {};
+    const { name, email, password, role } = body;
 
     // 1. Validation
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -135,16 +138,19 @@ export const signup = async (req, res, next) => {
  */
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+      ? req.body
+      : {};
+    const { email, password } = body;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return res.status(400).json({
         success: false,
         message: 'Email and password are required.'
       });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
 
     // Query user and explicitly select password field
     const user = await User.findOne({ email: cleanEmail }).select('+password');

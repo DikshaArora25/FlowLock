@@ -62,7 +62,7 @@ userSchema.pre('save', async function () {
 
 // Instance method to compare candidate password against hashed password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  if (!this.password || !candidatePassword) {
+  if (typeof candidatePassword !== 'string' || typeof this.password !== 'string') {
     return false;
   }
   return bcrypt.compare(candidatePassword, this.password);

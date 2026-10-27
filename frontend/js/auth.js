@@ -207,7 +207,7 @@ export const signupUser = async ({
 
 export const loginUser = async (email, password, rememberMe = false) => {
   const cleanEmail = email ? email.trim().toLowerCase() : '';
-  const cleanPassword = password ? password.trim() : '';
+  const cleanPassword = typeof password === 'string' ? password : '';
 
   if (!isValidEmail(cleanEmail)) {
     return { success: false, message: 'Please enter a valid email address.' };
