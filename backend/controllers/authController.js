@@ -30,6 +30,13 @@ export const signup = async (req, res, next) => {
       });
     }
 
+    if (name.trim().length > 80) {
+      return res.status(400).json({
+        success: false,
+        message: 'Full name cannot exceed 80 characters.'
+      });
+    }
+
     if (!email || typeof email !== 'string') {
       return res.status(400).json({
         success: false,
@@ -39,17 +46,24 @@ export const signup = async (req, res, next) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const cleanEmail = email.trim().toLowerCase();
-    if (!emailRegex.test(cleanEmail)) {
+    if (cleanEmail.length > 254 || !emailRegex.test(cleanEmail)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address.'
       });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 8) {
+    if (typeof password !== 'string' || password.length < 8) {
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 8 characters long.'
+      });
+    }
+
+    if (Buffer.byteLength(password, 'utf8') > 72) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password cannot exceed 72 UTF-8 bytes.'
       });
     }
 
@@ -59,6 +73,21 @@ export const signup = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Password must contain uppercase, lowercase, a number, and a special character.'
+      });
+    }
+
+    if (role !== undefined && typeof role !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Role must be a string.'
+      });
+    }
+
+    const cleanRole = role ? role.trim() : 'Software Engineer';
+    if (cleanRole.length > 60) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role cannot exceed 60 characters.'
       });
     }
 
@@ -76,7 +105,7 @@ export const signup = async (req, res, next) => {
       name: name.trim(),
       email: cleanEmail,
       password,
-      role: role ? role.trim() : 'Software Engineer'
+      role: cleanRole
     });
 
     // 4. Generate JWT
@@ -89,6 +118,12 @@ export const signup = async (req, res, next) => {
       user: newUser.toJSON()
     });
   } catch (error) {
+    if (error?.code === 11000 && error.keyPattern?.email) {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email address already exists.'
+      });
+    }
     next(error);
   }
 };

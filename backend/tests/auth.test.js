@@ -17,6 +17,12 @@ const TEST_USER = {
   password: 'Password123!',
   role: 'Senior Developer'
 };
+const RACE_USER = {
+  name: 'Concurrent Signup',
+  email: `race-${Date.now()}@flowlock.test`,
+  password: 'Password123!',
+  role: 'Software Engineer'
+};
 
 let authToken = '';
 
@@ -33,11 +39,15 @@ describe('FlowLock Authentication API Tests', () => {
       });
     });
 
-    await User.deleteMany({ email: TEST_USER.email.toLowerCase() });
+    await User.deleteMany({
+      email: { $in: [TEST_USER.email.toLowerCase(), RACE_USER.email.toLowerCase()] }
+    });
   });
 
   after(async () => {
-    await User.deleteMany({ email: TEST_USER.email.toLowerCase() });
+    await User.deleteMany({
+      email: { $in: [TEST_USER.email.toLowerCase(), RACE_USER.email.toLowerCase()] }
+    });
 
     if (server) {
       await new Promise(resolve => server.close(resolve));
@@ -90,6 +100,26 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.success, false);
   });
 
+  test('3a. Reject signup fields outside model limits or with invalid types', async () => {
+    const invalidUsers = [
+      { ...TEST_USER, name: 'N'.repeat(81) },
+      { ...TEST_USER, role: { name: 'Engineer' } },
+      { ...TEST_USER, email: `${'a'.repeat(250)}@x.co` },
+      { ...TEST_USER, password: `Abcdef1!${'💥'.repeat(17)}` }
+    ];
+
+    for (const user of invalidUsers) {
+      const res = await fetch(`${baseUrl}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      });
+
+      assert.equal(res.status, 400);
+      assert.equal((await res.json()).success, false);
+    }
+  });
+
   test('4. Successfully register a new user and return JWT (POST /api/auth/signup)', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
@@ -139,6 +169,17 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(res.status, 409);
     const body = await res.json();
     assert.equal(body.success, false);
+  });
+
+  test('5b. Return conflict when concurrent signups race on a unique email', async () => {
+    const requests = Array.from({ length: 2 }, () => fetch(`${baseUrl}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(RACE_USER)
+    }));
+    const responses = await Promise.all(requests);
+
+    assert.deepEqual(responses.map(response => response.status).sort((a, b) => a - b), [201, 409]);
   });
 
   test('6. Reject login with non-existent email (POST /api/auth/login)', async () => {
