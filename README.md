@@ -172,6 +172,11 @@ All responses return standard JSON format.
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Check server and MongoDB connection health |
+| `POST` | `/api/auth/signup` | Create an account and return a signed JWT |
+| `POST` | `/api/auth/login` | Verify credentials and return a signed JWT |
+| `GET` | `/api/auth/me` | Return the authenticated account (Bearer JWT required) |
+| `PATCH` | `/api/auth/me` | Update the authenticated account name and role |
+| `PATCH` | `/api/auth/password` | Change the authenticated account password |
 | `GET` | `/api/tasks` | Fetch all tasks (supports `?search=`, `?status=`, `?sortBy=`) |
 | `GET` | `/api/tasks/:id` | Fetch a single task by custom ID or MongoDB `_id` |
 | `POST` | `/api/tasks` | Create a new task (validates cycle and initial locks) |
@@ -182,6 +187,15 @@ All responses return standard JSON format.
 | `GET` | `/api/activity` | Fetch recent workspace activity events (`?limit=50`) |
 | `POST` | `/api/activity` | Record custom activity entry |
 | `DELETE` | `/api/activity` | Clear activity log |
+
+### Authentication API
+
+- `POST /api/auth/signup` accepts `{ "name", "email", "password", "role?" }`. Email addresses are trimmed and lowercased. Names must be 2–80 characters, email addresses must be valid and at most 254 characters, and passwords must be at least 8 characters, include uppercase and lowercase letters, a number, and a special character, and fit within bcrypt's 72-byte input limit. Duplicate email addresses return `409 Conflict`; invalid input returns `400 Bad Request`.
+- `POST /api/auth/login` accepts `{ "email", "password" }`. Email matching is case-insensitive; passwords are verified exactly as entered. Invalid credentials return the same `401` response.
+- Successful signup and login responses include `{ "success": true, "token": "...", "user": { ... } }`. The user object does not contain a password or password hash.
+- JWTs use HS256 and expire after `JWT_EXPIRES_IN` (default `24h`). Set `JWT_SECRET` and optional `JWT_EXPIRES_IN` in the backend environment; do not commit secrets.
+- Send protected requests with `Authorization: Bearer <token>`. Missing, malformed, expired, non-expiring, or unsupported-algorithm tokens are rejected with `401 Unauthorized`.
+- `GET /api/auth/me` returns the current account. `PATCH /api/auth/me` accepts `{ "name", "role" }`. `PATCH /api/auth/password` accepts `{ "currentPassword", "newPassword" }`; the current password must be verified before the new password is hashed and saved. Both update endpoints require a valid Bearer token.
 
 ### Dependency Rules Enforced by Backend
 1. **Blocked Task Anti-Cheat**: A task cannot be moved to `In Progress` or `Done` while any of its prerequisite dependencies have a status other than `Done`. Direct API requests attempting this return `400 Bad Request`.
@@ -195,15 +209,17 @@ All responses return standard JSON format.
 ## 6. Testing Instructions
 
 ### Automated Backend Tests
-An automated integration test suite is included in `express/tests/task.test.js`.
-To run tests:
+The backend integration tests require a dedicated MongoDB test database and a `JWT_SECRET`. Configure `MONGODB_URI` and `JWT_SECRET` through environment variables or an uncommitted `backend/.env`, then run from the repository root:
 
 ```bash
-cd express
+cd backend
+npm run test:auth
 npm test
 ```
 
-The test suite exercises:
+The authentication suite covers registration validation, duplicate and concurrent signup, normalized emails, password hashing and verification, response field privacy, JWT expiry/claims, protected profile updates, and password changes. Its fixtures only clean up their own unique `@flowlock.test` addresses.
+
+The full backend suite also exercises:
 - Health check and DB connectivity
 - Initial demo seeding and task retrieval
 - Task creation and input validation (empty title, invalid references)
