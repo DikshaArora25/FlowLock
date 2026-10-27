@@ -33,7 +33,7 @@
           <span class="nav-icon">✓</span>
           <span>Tasks</span>
         </a>
-        <a href="dashboard.html#inspector" class="sidebar-nav-item">
+        <a href="dashboard.html#inspector" class="sidebar-nav-item" id="sidebarInspectBtn">
           <span class="nav-icon">🔗</span>
           <span>Dependencies</span>
         </a>
@@ -59,7 +59,6 @@
       </div>
     </aside>
 
-    
     <div class="content-layout">
       
       <header class="header">
@@ -75,36 +74,91 @@
         </div>
       </header>
 
-      
       <section class="tasks-hero" style="margin: 24px; text-align: center;">
         <div class="hero-content">
-          <h1 class="hero-title" style="margin-bottom: 20px; font-size: 2.2rem; font-weight: 800;">Real-Time Activity</h1>
-          <p class="hero-subtitle" style="color: var(--text-main); opacity: 0.8; font-size: 1.1rem; margin-top: 16px; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5;">Track task state changes, lock recalculations, and system events instantly.</p>
-          <a href="dashboard.html" class="btn btn-primary hero-cta">Back to Dashboard →</a>
+          <h1 class="hero-title" style="margin-bottom: 12px; font-size: 2.2rem; font-weight: 800;">Real-Time Activity</h1>
+          <p class="hero-subtitle" style="color: var(--text-main); opacity: 0.8; font-size: 1.1rem; margin-top: 8px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5;">Track task state changes, lock recalculations, and dependency unlock events.</p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="dashboard.html" class="btn btn-primary hero-cta">← Back to Workspace</a>
+            <a href="tasks.html" class="btn btn-secondary hero-cta">Manage Tasks ✓</a>
+          </div>
         </div>
       </section>
 
-      
+      <main class="main-container" style="max-width: 960px; margin: 0 auto; padding-bottom: 40px;">
 
+        <!-- Activity Summary Statistics Cards -->
+        <section class="metrics-grid" style="margin-bottom: 24px;">
+          <div class="metric-card active-filter-card" id="cardTotalEvents" style="cursor: pointer;" title="Show all activity events">
+            <span class="metric-label">Total Events</span>
+            <span class="metric-value" id="statTotalEvents">0</span>
+            <span class="metric-sub">Recorded across workspace</span>
+          </div>
+          <div class="metric-card in-progress" id="cardMoves" style="cursor: pointer;" title="Filter by Status Moves">
+            <span class="metric-label">Status Moves</span>
+            <span class="metric-value" id="statMoves">0</span>
+            <span class="metric-sub">➔ Kanban progression</span>
+          </div>
+          <div class="metric-card done" id="cardUnlocks" style="cursor: pointer;" title="Filter by Unlocked Events">
+            <span class="metric-label">Unblocked</span>
+            <span class="metric-value" id="statUnlocks">0</span>
+            <span class="metric-sub">⚡ Dependencies resolved</span>
+          </div>
+          <div class="metric-card locked" id="cardBlocked" style="cursor: pointer;" title="Filter by Blocked Alerts">
+            <span class="metric-label">Blocked Alerts</span>
+            <span class="metric-value" id="statBlocked">0</span>
+            <span class="metric-sub">🔒 Policy rejections</span>
+          </div>
+        </section>
 
-      
-      <main class="main-container" style="max-width: 900px; margin: 0 auto; padding-bottom: 40px;">
+        <!-- Main Activity Card -->
+        <div class="activity-page-card glass-card" style="padding: 28px; border-radius: var(--radius-lg);">
 
-        <div class="activity-page-card glass-card" style="padding: 32px; border-radius: var(--radius-lg);">
+          <!-- Activity Toolbar & Filtering -->
+          <div class="toolbar" style="margin-bottom: 24px; padding: 14px;">
+            <div class="toolbar-left" style="flex: 1; min-width: 280px; gap: 10px;">
+              <div class="search-box" style="flex: 1; max-width: 320px;">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  id="activitySearchInput"
+                  class="search-input"
+                  placeholder="Filter activity by keyword..."
+                  aria-label="Filter activity by keyword"
+                >
+              </div>
 
-          <div
-            style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 24px;">
-            <div>
-              <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);">Workspace Activity Timeline</h2>
-              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Audit trail tracking task state
-                changes, lock recalculations, and system events.</p>
+              <select id="activityTypeFilter" class="filter-select" aria-label="Filter by Event Type">
+                <option value="all">All Event Types</option>
+                <option value="move">➔ Status Moves</option>
+                <option value="unlock">⚡ Dependencies Unlocked</option>
+                <option value="blocked">🔒 Blocked Actions</option>
+                <option value="add">➕ Task Created</option>
+                <option value="edit">✏️ Task Edited</option>
+                <option value="delete">🗑️ Task Deleted</option>
+                <option value="system">⚙️ System Events</option>
+              </select>
             </div>
-            <button id="clearActivityBtn" class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;">Clear
-              History</button>
+
+            <div class="toolbar-right" style="gap: 8px;">
+              <button id="refreshActivityBtn" class="btn btn-secondary" title="Fetch latest activity from backend">
+                <span id="refreshIcon">🔄</span> Refresh
+              </button>
+              <button id="exportActivityBtn" class="btn btn-secondary" title="Download activity history as JSON">
+                📥 Export Log
+              </button>
+              <button id="clearActivityBtn" class="btn btn-secondary" style="border-color: var(--status-locked); color: var(--status-locked);" title="Clear activity history">
+                🗑️ Clear History
+              </button>
+            </div>
           </div>
 
-          <div id="fullActivityList" class="activity-timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 18px;">
-            
+          <!-- Connection / Error Banner -->
+          <div id="activityAlertBanner" style="display: none; padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 13px;"></div>
+
+          <!-- Timeline Container -->
+          <div id="fullActivityList" class="activity-timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 18px; min-height: 200px;">
+            <!-- Rendered via JS -->
           </div>
 
         </div>
@@ -117,24 +171,61 @@
     </div>
   </div>
 
+  <!-- Clear History Confirmation Modal -->
+  <div id="clearConfirmModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="color: var(--status-locked);">Clear Activity History</h3>
+        <button type="button" class="btn-icon btn-close-clear-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-main); line-height: 1.5;">
+          Are you sure you want to clear the entire workspace activity log? This audit trail will be permanently removed.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-clear-modal">Cancel</button>
+        <button id="confirmClearBtn" type="button" class="btn btn-danger">Yes, Clear History</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { checkAuthGuard, logoutUser } from './js/auth.js';
     import { taskManager } from './js/taskManager.js';
-    import { escapeHtml } from './js/utils.js';
+    import { escapeHtml, debounce, showToast } from './js/utils.js';
     import { loadPreferences, savePreferences } from './js/storage.js';
 
+    // State for activity page
+    const state = {
+      type: 'all',
+      search: '',
+      activities: [],
+      stats: null,
+      isLoading: false
+    };
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // Auth Guard
+      // 1. Auth Guard
       const user = checkAuthGuard('activity');
       if (user) {
-        document.getElementById('userName').textContent = user.name || 'User';
-        document.getElementById('headerUserAvatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) userNameEl.textContent = user.name || 'User';
+        const avatarEl = document.getElementById('headerUserAvatar');
+        if (avatarEl) avatarEl.textContent = (user.name || 'U').charAt(0).toUpperCase();
       }
 
-      // Fetch latest activities from MongoDB API
-      await taskManager.loadFromAPI();
+      // 2. Theme Toggle
+      initTheme();
 
-      // Theme toggle
+      // 3. Setup event listeners
+      initControls();
+
+      // 4. Initial load
+      await loadActivityData();
+    });
+
+    const initTheme = () => {
       const prefs = loadPreferences();
       if (prefs.theme) {
         document.documentElement.setAttribute('data-theme', prefs.theme);
@@ -155,58 +246,293 @@
 
       const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
       if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', logoutUser);
+    };
 
-      function renderActivityTimeline() {
-        const activities = taskManager.getRecentActivities(50);
-        const container = document.getElementById('fullActivityList');
-        if (!container) return;
+    const loadActivityData = async () => {
+      state.isLoading = true;
+      renderLoadingSkeleton();
 
-        container.innerHTML = '';
+      try {
+        const [activityResult, statsResult] = await Promise.all([
+          taskManager.fetchActivities({
+            type: state.type,
+            search: state.search,
+            limit: 100
+          }),
+          taskManager.getActivityStats()
+        ]);
 
-        if (activities.length === 0) {
-          container.innerHTML = `
-            <div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px;">
-              📜 No activity logged yet. Move or edit tasks on the Kanban board to trigger event logs.
+        state.activities = activityResult.activities || [];
+        state.stats = statsResult;
+        hideAlert();
+
+        renderStats();
+        renderActivityTimeline();
+      } catch (err) {
+        console.error('[Activity] Error fetching activity data:', err);
+        showAlert(`⚠️ Could not reach server: ${err.message}. Displaying local events.`, 'error');
+        state.activities = taskManager.getRecentActivities(50);
+        renderActivityTimeline();
+      } finally {
+        state.isLoading = false;
+      }
+    };
+
+    const renderLoadingSkeleton = () => {
+      const container = document.getElementById('fullActivityList');
+      if (!container) return;
+
+      container.innerHTML = Array.from({ length: 4 }).map(() => `
+        <div class="activity-timeline-item" style="opacity: 0.5; animation: pulse 1.5s infinite;">
+          <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--border-color);"></div>
+            <div style="flex: 1;">
+              <div style="height: 14px; width: 60%; background: var(--border-color); border-radius: 4px; margin-bottom: 6px;"></div>
+              <div style="height: 10px; width: 30%; background: var(--border-color); border-radius: 4px;"></div>
             </div>
-          `;
-          return;
+          </div>
+        </div>
+      `).join('');
+    };
+
+    const renderStats = () => {
+      const totalEl = document.getElementById('statTotalEvents');
+      const movesEl = document.getElementById('statMoves');
+      const unlocksEl = document.getElementById('statUnlocks');
+      const blockedEl = document.getElementById('statBlocked');
+
+      if (state.stats && state.stats.byType) {
+        if (totalEl) totalEl.textContent = state.stats.total ?? 0;
+        if (movesEl) movesEl.textContent = state.stats.byType.move ?? 0;
+        if (unlocksEl) unlocksEl.textContent = state.stats.byType.unlock ?? 0;
+        if (blockedEl) blockedEl.textContent = state.stats.byType.blocked ?? 0;
+      } else {
+        const allActs = taskManager.activities || [];
+        if (totalEl) totalEl.textContent = allActs.length;
+        if (movesEl) movesEl.textContent = allActs.filter(a => a.type === 'move').length;
+        if (unlocksEl) unlocksEl.textContent = allActs.filter(a => a.type === 'unlock').length;
+        if (blockedEl) blockedEl.textContent = allActs.filter(a => a.type === 'blocked').length;
+      }
+    };
+
+    const renderActivityTimeline = () => {
+      const container = document.getElementById('fullActivityList');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (state.activities.length === 0) {
+        const isFiltered = state.type !== 'all' || state.search.trim() !== '';
+        container.innerHTML = `
+          <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+            <div style="font-size: 24px; margin-bottom: 8px;">📜</div>
+            <strong>${isFiltered ? 'No matching activity records found.' : 'No activity logged yet.'}</strong>
+            <p style="margin-top: 6px; font-size: 12px; color: var(--text-dim);">
+              ${isFiltered 
+                ? 'Try broadening your search term or selecting "All Event Types".' 
+                : 'Interact with tasks on the Kanban board to generate real-time audit logs.'}
+            </p>
+            ${isFiltered ? `
+              <button id="resetActivityFilterBtn" class="btn btn-secondary" style="margin-top: 14px; font-size: 12px; padding: 6px 14px;">
+                Reset Filters
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        const resetBtn = document.getElementById('resetActivityFilterBtn');
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => {
+            state.type = 'all';
+            state.search = '';
+            const searchInput = document.getElementById('activitySearchInput');
+            if (searchInput) searchInput.value = '';
+            const filterSelect = document.getElementById('activityTypeFilter');
+            if (filterSelect) filterSelect.value = 'all';
+            loadActivityData();
+          });
         }
+        return;
+      }
 
-        activities.forEach(act => {
-          let icon = 'ℹ️';
-          let typeClass = 'act-info';
+      state.activities.forEach(act => {
+        let icon = 'ℹ️';
+        let badgeColor = 'var(--text-muted)';
+        let typeLabel = (act.type || 'info').toUpperCase();
 
-          if (act.type === 'move') { icon = '➔'; typeClass = 'act-move'; }
-          else if (act.type === 'unlock') { icon = '⚡'; typeClass = 'act-unlock'; }
-          else if (act.type === 'blocked') { icon = '🔒'; typeClass = 'act-blocked'; }
-          else if (act.type === 'add') { icon = '➕'; typeClass = 'act-add'; }
-          else if (act.type === 'edit') { icon = '✏️'; typeClass = 'act-edit'; }
-          else if (act.type === 'delete') { icon = '🗑️'; typeClass = 'act-delete'; }
+        if (act.type === 'move') { icon = '➔'; badgeColor = 'var(--status-in-progress)'; }
+        else if (act.type === 'unlock') { icon = '⚡'; badgeColor = 'var(--status-done)'; }
+        else if (act.type === 'blocked') { icon = '🔒'; badgeColor = 'var(--status-locked)'; }
+        else if (act.type === 'add') { icon = '➕'; badgeColor = 'var(--status-todo)'; }
+        else if (act.type === 'edit') { icon = '✏️'; badgeColor = 'var(--accent-primary)'; }
+        else if (act.type === 'delete') { icon = '🗑️'; badgeColor = 'var(--status-locked)'; }
+        else if (act.type === 'system') { icon = '⚙️'; badgeColor = 'var(--status-backlog)'; }
 
-          const item = document.createElement('div');
-          item.className = `activity-timeline-item ${typeClass}`;
-          item.innerHTML = `
-            <div class="act-item-icon">${icon}</div>
-            <div class="act-item-content">
-              <span class="act-item-text">${escapeHtml(act.text)}</span>
-              <span class="act-item-time">${act.timestamp || 'Just now'}</span>
+        const item = document.createElement('div');
+        item.className = 'activity-timeline-item';
+        item.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 15px; border: 1px solid var(--border-color); flex-shrink: 0;">
+              ${icon}
             </div>
-          `;
-          container.appendChild(item);
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
+                <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); color: ${badgeColor}; border: 1px solid ${badgeColor}33;">
+                  ${typeLabel}
+                </span>
+                <span class="activity-time" style="font-size: 11px;">${escapeHtml(act.timestamp || 'Just now')}</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-main); margin: 0; word-break: break-word; line-height: 1.4;">
+                ${escapeHtml(act.text)}
+              </p>
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    };
+
+    const initControls = () => {
+      // Search input (debounced)
+      const searchInput = document.getElementById('activitySearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', debounce((e) => {
+          state.search = e.target.value;
+          loadActivityData();
+        }, 250));
+      }
+
+      // Type filter
+      const typeFilter = document.getElementById('activityTypeFilter');
+      if (typeFilter) {
+        typeFilter.addEventListener('change', (e) => {
+          state.type = e.target.value;
+          loadActivityData();
         });
       }
 
-      renderActivityTimeline();
+      // Metric card clicks for instant filtering
+      const cardTotal = document.getElementById('cardTotalEvents');
+      if (cardTotal) {
+        cardTotal.addEventListener('click', () => {
+          state.type = 'all';
+          if (typeFilter) typeFilter.value = 'all';
+          loadActivityData();
+        });
+      }
 
+      const cardMoves = document.getElementById('cardMoves');
+      if (cardMoves) {
+        cardMoves.addEventListener('click', () => {
+          state.type = 'move';
+          if (typeFilter) typeFilter.value = 'move';
+          loadActivityData();
+        });
+      }
+
+      const cardUnlocks = document.getElementById('cardUnlocks');
+      if (cardUnlocks) {
+        cardUnlocks.addEventListener('click', () => {
+          state.type = 'unlock';
+          if (typeFilter) typeFilter.value = 'unlock';
+          loadActivityData();
+        });
+      }
+
+      const cardBlocked = document.getElementById('cardBlocked');
+      if (cardBlocked) {
+        cardBlocked.addEventListener('click', () => {
+          state.type = 'blocked';
+          if (typeFilter) typeFilter.value = 'blocked';
+          loadActivityData();
+        });
+      }
+
+      // Refresh Button
+      const refreshBtn = document.getElementById('refreshActivityBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+          const icon = document.getElementById('refreshIcon');
+          if (icon) icon.style.animation = 'spin 0.6s linear infinite';
+          await loadActivityData();
+          if (icon) icon.style.animation = 'none';
+          showToast('✓ Activity feed refreshed', 'success');
+        });
+      }
+
+      // Export Button
+      const exportBtn = document.getElementById('exportActivityBtn');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+          const exportData = {
+            exportedAt: new Date().toISOString(),
+            totalCount: state.activities.length,
+            activities: state.activities
+          };
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flowlock-activity-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('📥 Activity log exported as JSON', 'success');
+        });
+      }
+
+      // Clear modal handlers
       const clearBtn = document.getElementById('clearActivityBtn');
-      if (clearBtn) {
-        clearBtn.addEventListener('click', async () => {
-          await taskManager.clearActivities();
-          renderActivityTimeline();
+      const clearModal = document.getElementById('clearConfirmModal');
+      const closeClearBtns = document.querySelectorAll('.btn-close-clear-modal');
+      const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+      if (clearBtn && clearModal) {
+        clearBtn.addEventListener('click', () => {
+          clearModal.classList.add('active');
         });
       }
 
-    });
+      closeClearBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (clearModal) clearModal.classList.remove('active');
+        });
+      });
+
+      if (confirmClearBtn && clearModal) {
+        confirmClearBtn.addEventListener('click', async () => {
+          confirmClearBtn.disabled = true;
+          confirmClearBtn.textContent = 'Clearing...';
+          try {
+            await taskManager.clearActivities();
+            clearModal.classList.remove('active');
+            showToast('✓ Activity history cleared', 'success');
+            await loadActivityData();
+          } catch (err) {
+            showToast(`Failed to clear: ${err.message}`, 'error');
+          } finally {
+            confirmClearBtn.disabled = false;
+            confirmClearBtn.textContent = 'Yes, Clear History';
+          }
+        });
+      }
+    };
+
+    const showAlert = (message, type = 'error') => {
+      const banner = document.getElementById('activityAlertBanner');
+      if (!banner) return;
+      banner.style.display = 'block';
+      banner.style.background = type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)';
+      banner.style.border = `1px solid ${type === 'error' ? 'var(--status-locked)' : 'var(--accent-primary)'}`;
+      banner.style.color = type === 'error' ? 'var(--status-locked)' : 'var(--text-main)';
+      banner.innerHTML = message;
+    };
+
+    const hideAlert = () => {
+      const banner = document.getElementById('activityAlertBanner');
+      if (banner) banner.style.display = 'none';
+    };
   </script>
 </body>
 
