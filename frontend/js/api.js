@@ -119,8 +119,23 @@ export const importTasksAPI = async (tasks) => {
 };
 
 // Activity API
-export const getActivityAPI = async (limit = 50) => {
-  return apiRequest(`/activity?limit=${limit}`, { method: 'GET' });
+export const getActivityAPI = async (options = {}) => {
+  let query = '';
+  if (typeof options === 'number') {
+    query = `?limit=${options}`;
+  } else {
+    const params = new URLSearchParams();
+    if (options.limit) params.append('limit', options.limit);
+    if (options.page) params.append('page', options.page);
+    if (options.type && options.type !== 'all') params.append('type', options.type);
+    if (options.search && options.search.trim()) params.append('search', options.search.trim());
+    query = params.toString() ? `?${params.toString()}` : '';
+  }
+  return apiRequest(`/activity${query}`, { method: 'GET' });
+};
+
+export const getActivityStatsAPI = async () => {
+  return apiRequest('/activity/stats', { method: 'GET' });
 };
 
 export const logActivityAPI = async (text, type = 'info') => {
