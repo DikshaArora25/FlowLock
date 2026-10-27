@@ -9,11 +9,22 @@ const connectDB = async () => {
 
     const isAtlas = mongoUri.startsWith('mongodb+srv://') || mongoUri.includes('.mongodb.net');
     const isLocal = mongoUri.includes('localhost') || mongoUri.includes('127.0.0.1');
-    const conn = await mongoose.connect(mongoUri);
-
-    const targetType = isAtlas ? 'MongoDB Atlas (Cloud)' : (isLocal ? 'Local MongoDB' : 'Custom MongoDB');
-    console.log(`[MongoDB] Connected to ${targetType} database: "${conn.connection.name}" at host: ${conn.connection.host}`);
-    return conn;
+    let conn;
+    try {
+      conn = await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+      const targetType = isAtlas ? 'MongoDB Atlas (Cloud)' : (isLocal ? 'Local MongoDB' : 'Custom MongoDB');
+      console.log(`[MongoDB] Connected to ${targetType} database: "${conn.connection.name}" at host: ${conn.connection.host}`);
+      return conn;
+    } catch (primaryError) {
+      if (isAtlas) {
+        console.warn(`[MongoDB Warning] Atlas connection failed (${primaryError.message}).`);
+        console.log(`[MongoDB] Attempting fallback to local MongoDB: mongodb://127.0.0.1:27017/flowlock...`);
+        conn = await mongoose.connect('mongodb://127.0.0.1:27017/flowlock', { serverSelectionTimeoutMS: 5000 });
+        console.log(`[MongoDB] Connected to Local MongoDB database: "${conn.connection.name}" at host: ${conn.connection.host}`);
+        return conn;
+      }
+      throw primaryError;
+    }
   } catch (error) {
     console.error(`[MongoDB] Connection error: ${error.message}`);
     if (process.env.NODE_ENV !== 'test') {
@@ -33,3 +44,4 @@ export const disconnectDB = async () => {
 };
 
 export default connectDB;
+
