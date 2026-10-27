@@ -1,6 +1,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -267,6 +268,32 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(res.status, 401);
     const body = await res.json();
     assert.equal(body.success, false);
+  });
+
+  test('10a. Reject expired, non-expiring, malformed-claim, and unsupported-algorithm JWTs', async () => {
+    const secret = process.env.JWT_SECRET;
+    const userId = '507f1f77bcf86cd799439011';
+    const invalidTokens = [
+      jwt.sign({ id: userId }, secret, { expiresIn: -1 }),
+      jwt.sign({ id: userId }, secret),
+      jwt.sign({ sub: userId }, secret, { expiresIn: '1h' }),
+      jwt.sign({ id: 'not-an-object-id' }, secret, { expiresIn: '1h' }),
+      jwt.sign({ id: userId }, secret, { expiresIn: '1h', algorithm: 'HS384' })
+    ];
+
+    for (const token of invalidTokens) {
+      const res = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      assert.equal(res.status, 401);
+      assert.equal((await res.json()).success, false);
+    }
+
+    const malformedHeader = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Authorization: 'Bearer token extra' }
+    });
+    assert.equal(malformedHeader.status, 401);
   });
 
   test('11. Protected route accepts valid JWT and returns profile (GET /api/auth/me)', async () => {

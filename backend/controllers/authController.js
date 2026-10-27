@@ -10,7 +10,10 @@ const generateToken = (userId) => {
     throw new Error('JWT_SECRET is not defined in environment variables.');
   }
   const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
-  return jwt.sign({ id: userId }, secret, { expiresIn });
+  return jwt.sign({ id: userId }, secret, {
+    algorithm: 'HS256',
+    expiresIn
+  });
 };
 
 /**
