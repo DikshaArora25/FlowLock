@@ -134,6 +134,7 @@
           </div>
 
           <div class="toolbar-right">
+            <button id="syncBoardBtn" class="btn btn-secondary" title="Sync workspace from backend">🔄 Sync</button>
             <button id="exportJsonBtn" class="btn btn-secondary">📥 Export Board</button>
             <button id="importJsonBtn" class="btn btn-secondary">📤 Import Board</button>
             <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
@@ -187,9 +188,12 @@
         </section>
 
         <section class="activity-panel">
-          <div class="activity-header">
-            <span>📜 Workspace Activity</span>
-            <span style="font-size: 11px; color: var(--text-dim);">Real-time events & lock propagation</span>
+          <div class="activity-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>📜 Workspace Activity</span>
+              <span style="font-size: 11px; color: var(--text-dim);">Real-time events & lock propagation</span>
+            </div>
+            <a href="activity.html" style="font-size: 12px; color: var(--accent-primary); text-decoration: none; font-weight: 600;">View Full Audit Trail →</a>
           </div>
           <div id="activityList" class="activity-list"></div>
         </section>

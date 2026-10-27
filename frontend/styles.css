@@ -3417,3 +3417,37 @@ button {
   padding: 4px 8px;
   border-radius: 4px;
 }
+
+/* Member 3 Dashboard & Activity Interactive Styles */
+.metric-card.is-active {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-md) !important;
+  transform: translateY(-2px);
+}
+
+.active-filter-card {
+  border-color: var(--accent-primary) !important;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .activity-timeline-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .activity-time {
+    align-self: flex-start;
+  }
+}
+
