@@ -149,6 +149,26 @@ export const loginAPI = async (credentials) => {
   });
 };
 
+export const updateProfileAPI = async (token, profile) => {
+  return apiRequest('/auth/me', {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(profile)
+  });
+};
+
+export const changePasswordAPI = async (token, passwords) => {
+  return apiRequest('/auth/password', {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(passwords)
+  });
+};
+
 export const getMeAPI = async (token) => {
   return apiRequest('/auth/me', {
     method: 'GET',

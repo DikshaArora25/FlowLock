@@ -5,7 +5,14 @@ import {
   loadUsers,
   saveUsers
 } from './storage.js';
-import { signupAPI, loginAPI } from './api.js';
+import {
+  signupAPI,
+  loginAPI,
+  getMeAPI,
+  updateProfileAPI,
+  changePasswordAPI
+} from './api.js';
+import { showToast } from './utils.js';
 
 export const DEMO_USER = {
   email: 'demo@flowlock.app',
@@ -17,6 +24,49 @@ export const DEMO_USER = {
 const PBKDF2_ITERATIONS = 100000;
 const PROTECTED_PAGES = ['dashboard', 'tasks', 'activity', 'profile'];
 const GUEST_PAGES = ['login', 'signup', 'index'];
+
+const getTokenExpiry = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')));
+    return Number.isFinite(decoded.exp) ? new Date(decoded.exp * 1000).toISOString() : null;
+  } catch (error) {
+    console.error('Unable to read authentication token expiry:', error);
+    return null;
+  }
+};
+
+const verifyServerSession = async (session) => {
+  if (typeof session.token !== 'string' || session.token.split('.').length !== 3) return;
+
+  try {
+    const response = await getMeAPI(session.token);
+    if (!response.user || response.user.id !== session.id) {
+      throw new Error('The server returned a different account for this session.');
+    }
+
+    saveSessionUser({
+      ...session,
+      email: response.user.email,
+      name: response.user.name,
+      role: response.user.role || 'Software Engineer',
+      createdAt: response.user.createdAt,
+      expiresAt: getTokenExpiry(session.token) || session.expiresAt
+    }, session.rememberMe);
+  } catch (error) {
+    if (error.status === 401) {
+      clearSessionUser();
+      window.location.href = 'login.html?expired=1';
+      return;
+    }
+
+    console.error('Unable to verify the current FlowLock session:', error);
+    showToast('Unable to verify your session with FlowLock. Check your connection.', 'warning', 7000);
+  }
+};
 
 // Convert Uint8Array buffer to hex string
 const bufferToHex = (buffer) => {
@@ -207,7 +257,7 @@ export const signupUser = async ({
 
 export const loginUser = async (email, password, rememberMe = false) => {
   const cleanEmail = email ? email.trim().toLowerCase() : '';
-  const cleanPassword = password ? password.trim() : '';
+  const cleanPassword = typeof password === 'string' ? password : '';
 
   if (!isValidEmail(cleanEmail)) {
     return { success: false, message: 'Please enter a valid email address.' };
@@ -257,7 +307,7 @@ export const loginUser = async (email, password, rememberMe = false) => {
       rememberMe: Boolean(rememberMe),
       createdAt: res.user.createdAt,
       loggedInAt: new Date().toISOString(),
-      expiresAt
+      expiresAt: getTokenExpiry(res.token) || expiresAt
     };
 
     saveSessionUser(userSession, rememberMe);
@@ -308,15 +358,41 @@ export const loginUser = async (email, password, rememberMe = false) => {
   }
 };
 
-export const updateUserProfile = ({ name, role }) => {
+export const updateUserProfile = async ({ name, role }) => {
   const current = getSessionUser();
   if (!current) return { success: false, message: 'No active session.' };
 
-  const cleanName = name ? name.trim() : current.name;
-  const cleanRole = role ? role.trim() : (current.role || 'Software Engineer');
+  if ((name !== undefined && typeof name !== 'string') || (role !== undefined && typeof role !== 'string')) {
+    return { success: false, message: 'Name and role must be text values.' };
+  }
 
-  if (cleanName.length < 2) {
-    return { success: false, message: 'Full name must be at least 2 characters.' };
+  const cleanName = typeof name === 'string' ? name.trim() : current.name;
+  const cleanRole = typeof role === 'string' && role.trim()
+    ? role.trim()
+    : (current.role || 'Software Engineer');
+
+  if (typeof cleanName !== 'string' || cleanName.length < 2 || cleanName.length > 80) {
+    return { success: false, message: 'Full name must be between 2 and 80 characters.' };
+  }
+  if (typeof cleanRole !== 'string' || cleanRole.length > 60) {
+    return { success: false, message: 'Role cannot exceed 60 characters.' };
+  }
+
+  if (typeof current.token === 'string' && current.token.split('.').length === 3) {
+    try {
+      const response = await updateProfileAPI(current.token, {
+        name: cleanName,
+        role: cleanRole
+      });
+      const updatedSession = { ...current, ...response.user };
+      saveSessionUser(updatedSession, current.rememberMe);
+      return { success: true, user: updatedSession };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Unable to update your profile. Please try again.'
+      };
+    }
   }
 
   const users = loadUsers();
@@ -354,10 +430,22 @@ export const changeUserPassword = async ({ currentPassword, newPassword, confirm
   }
 
   if (current.id === 'demo-user') {
-    if (currentPassword !== DEMO_USER.password) {
-      return { success: false, message: 'Current password does not match demo credentials.' };
+    return { success: false, message: 'The demo account password cannot be changed.' };
+  }
+
+  if (typeof current.token === 'string' && current.token.split('.').length === 3) {
+    try {
+      const response = await changePasswordAPI(current.token, {
+        currentPassword,
+        newPassword
+      });
+      return { success: true, message: response.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Unable to update your password. Please try again.'
+      };
     }
-    return { success: true, message: 'Demo password verified. Password updated successfully!' };
   }
 
   const users = loadUsers();
@@ -386,6 +474,10 @@ export const checkAuthGuard = (currentPage) => {
   if (PROTECTED_PAGES.includes(currentPage) && !session) {
     window.location.href = 'login.html';
     return null;
+  }
+
+  if (PROTECTED_PAGES.includes(currentPage) && session) {
+    void verifyServerSession(session);
   }
 
   // Guest-only pages -> redirect to dashboard if logged in
