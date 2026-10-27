@@ -2,9 +2,13 @@
 node_modules/
 package-lock.json
 
-# Environment variables
+# Environment variables & secrets
 .env
-.env.local
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
 
 # Logs
 logs/
@@ -16,13 +20,3 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
-@"
-
-# Environment secrets
-.env.*
-!.env.example
-**/.env
-**/.env.*
-!**/.env.example
-node_modules/
-"@ | Add-Content -Path .gitignore
