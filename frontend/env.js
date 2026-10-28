@@ -1,18 +1,24 @@
 /**
  * FlowLock Frontend Dynamic Environment Configuration
  * -------------------------------------------------------------
- * Reads backend API configuration dynamically from frontend/.env
- * without requiring hardcoded URLs in JavaScript source code.
- *
- * Supported keys in frontend/.env:
- * - API_BASE_URL=http://localhost:5000/api
- * - VITE_API_URL=http://localhost:5000/api (alias)
- * - BACKEND_URL=http://localhost:5000/api (alias)
+ * - In Local Development: Dynamically loads configuration from frontend/.env
+ * - In Production (Vercel): Uses production backend URL without making dead
+ *   fetch calls to .env (which is gitignored and blocked on production).
  * -------------------------------------------------------------
  */
 
+const isProduction =
+  typeof window !== 'undefined' &&
+  window.location.hostname !== 'localhost' &&
+  window.location.hostname !== '127.0.0.1';
+
 export const ENV = {
-  API_BASE_URL: 'http://localhost:5000/api'
+  // Configurable backend URL:
+  // - In production: uses your deployed backend or window override
+  // - In local: defaults to http://localhost:5000/api (overridden by local frontend/.env if present)
+  API_BASE_URL: isProduction
+    ? (window.FLOWLOCK_API_URL || 'https://flowlock-backend.onrender.com/api')
+    : 'http://localhost:5000/api'
 };
 
 /**
@@ -48,9 +54,20 @@ function parseEnv(text) {
 
 /**
  * Asynchronously fetch and parse frontend/.env relative to this file
+ * Only runs in local development since .env is gitignored and blocked by Vercel in production
  */
 async function loadEnv() {
   if (typeof window === 'undefined') return ENV;
+
+  const isLocal =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  // Do not fetch .env on public production domains (Vercel) to avoid 404 errors
+  if (!isLocal) {
+    window.__ENV__ = ENV;
+    return ENV;
+  }
 
   try {
     const envFileUrl = new URL('.env', import.meta.url).href;
@@ -71,7 +88,7 @@ async function loadEnv() {
       Object.assign(ENV, parsed);
     }
   } catch (err) {
-    // Graceful fallback to default if .env is unreachable
+    // Graceful fallback to default if local .env is missing
   }
 
   // Expose on window for runtime browser debugging
