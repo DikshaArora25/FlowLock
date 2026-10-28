@@ -3,7 +3,9 @@
  * Authoritative connection to Express & MongoDB backend
  */
 
-import { ENV, envReady } from '../env.js';
+import { ENV } from '../env.js';
+
+export const envReady = Promise.resolve(ENV || {});
 
 // Configurable API Base URL (driven by frontend/.env via env.js or runtime overrides)
 const resolveBaseUrl = () => {

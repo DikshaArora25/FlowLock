@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FlowLock Frontend Environment Configuration
  * 
  * -------------------------------------------------------------
@@ -15,6 +15,8 @@
 export const ENV = {
   API_BASE_URL: 'https://flowlock.onrender.com/api'
 };
+
+export const envReady = Promise.resolve(ENV);
 
 // Expose on window for runtime browser debugging or script tag access
 if (typeof window !== 'undefined') {
