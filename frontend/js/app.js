@@ -2,6 +2,7 @@ import { checkAuthGuard, logoutUser } from './auth.js';
 import { taskManager } from './taskManager.js';
 import {
   renderMetrics,
+  renderDashboardLoading,
   renderKanbanBoard,
   renderDependencyInspector,
   populateTaskForm,
@@ -37,6 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const themeBtn = document.getElementById('themeToggleBtn');
     if (themeBtn) themeBtn.textContent = prefs.theme === 'dark' ? '🌙' : '☀️';
   }
+
+  // Show dashboard skeleton loader while fetching
+  renderDashboardLoading(true);
 
   // Authoritatively fetch tasks from MongoDB backend
   const loadResult = await taskManager.loadFromAPI();
@@ -83,7 +87,7 @@ export const refreshAppUI = () => {
   const metrics = taskManager.getMetrics();
   const activities = taskManager.getRecentActivities(20);
 
-  renderMetrics(metrics);
+  renderMetrics(metrics, appState.filterStatus);
   renderKanbanBoard(filteredTasks, allTasks);
   renderActivityLog(activities);
 };
@@ -143,7 +147,37 @@ const initToolbarListeners = () => {
       if (sortSelect) sortSelect.value = 'priority';
 
       refreshAppUI();
-      showToast('Filters reset', 'info');
+    });
+  }
+
+  // Interactive metric card click filtering
+  const metricsGrid = document.getElementById('metricsGrid');
+  if (metricsGrid) {
+    metricsGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.metric-card[data-filter]');
+      if (!card) return;
+      const filter = card.dataset.filter;
+      appState.filterStatus = filter;
+      if (filterSelect) filterSelect.value = filter;
+      refreshAppUI();
+    });
+  }
+
+  // Workspace Sync button
+  const syncBtn = document.getElementById('syncBoardBtn');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', async () => {
+      syncBtn.disabled = true;
+      syncBtn.textContent = '🔄 Syncing...';
+      const res = await taskManager.loadFromAPI();
+      syncBtn.disabled = false;
+      syncBtn.textContent = '🔄 Sync';
+      if (res.success) {
+        showToast('✓ Workspace synced from backend', 'success');
+      } else {
+        showToast(`⚠️ Server notice: ${res.message}`, 'info');
+      }
+      refreshAppUI();
     });
   }
 };

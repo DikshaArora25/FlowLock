@@ -2,42 +2,70 @@ import { escapeHtml, formatDate } from './utils.js';
 import { getBlockingDependencies } from './dependencyEngine.js';
 import { getCurrentUser } from './auth.js';
 
-export const renderMetrics = (metrics) => {
+export const renderMetrics = (metrics, activeFilter = 'all') => {
   const container = document.getElementById('metricsGrid');
   if (!container) return;
 
+  const isActive = (filterVal) => activeFilter === filterVal ? 'is-active' : '';
+
   container.innerHTML = `
-    <div class="metric-card">
+    <div class="metric-card ${isActive('all')}" data-filter="all" role="button" tabindex="0" title="Filter by All Tasks" style="cursor: pointer;">
       <span class="metric-label">Total Tasks</span>
       <span class="metric-value">${metrics.total}</span>
       <span class="metric-sub">${metrics.withDeps} with dependencies</span>
     </div>
-    <div class="metric-card todo">
+    <div class="metric-card todo ${isActive('Todo')}" data-filter="Todo" role="button" tabindex="0" title="Filter by Todo Tasks" style="cursor: pointer;">
       <span class="metric-label">Todo</span>
       <span class="metric-value">${metrics.todo}</span>
       <span class="metric-sub">Ready to start</span>
     </div>
-    <div class="metric-card in-progress">
+    <div class="metric-card in-progress ${isActive('In Progress')}" data-filter="In Progress" role="button" tabindex="0" title="Filter by In Progress Tasks" style="cursor: pointer;">
       <span class="metric-label">In Progress</span>
       <span class="metric-value">${metrics.inProgress}</span>
       <span class="metric-sub">Currently active</span>
     </div>
-    <div class="metric-card done">
+    <div class="metric-card done ${isActive('Done')}" data-filter="Done" role="button" tabindex="0" title="Filter by Done Tasks" style="cursor: pointer;">
       <span class="metric-label">Done</span>
       <span class="metric-value">${metrics.done}</span>
       <span class="metric-sub">Completed</span>
     </div>
-    <div class="metric-card locked">
+    <div class="metric-card locked ${isActive('locked')}" data-filter="locked" role="button" tabindex="0" title="Filter by Blocked Tasks" style="cursor: pointer;">
       <span class="metric-label">Locked Tasks</span>
       <span class="metric-value">${metrics.locked}</span>
       <span class="metric-sub">Blocked by dependencies</span>
     </div>
-    <div class="metric-card">
-      <span class="metric-label">Completion %</span>
+    <div class="metric-card" style="border-left: 4px solid var(--accent-secondary);" title="Overall unblocked health">
+      <span class="metric-label">Unblocked Health</span>
+      <span class="metric-value" style="color: ${metrics.unblockedHealth >= 80 ? 'var(--status-done)' : (metrics.unblockedHealth >= 50 ? 'var(--status-in-progress)' : 'var(--status-locked)')};">${metrics.unblockedHealth}%</span>
+      <span class="metric-sub">${metrics.total - metrics.locked} of ${metrics.total} tasks unblocked</span>
+    </div>
+    <div class="metric-card" title="Task completion rate">
+      <span class="metric-label">Completion Rate</span>
       <span class="metric-value">${metrics.completionRate}%</span>
-      <span class="metric-sub">Overall progress</span>
+      <span class="metric-sub">Overall project progress</span>
     </div>
   `;
+};
+
+export const renderDashboardLoading = (isLoading = true) => {
+  const container = document.getElementById('kanbanBoard');
+  if (!container) return;
+
+  if (isLoading) {
+    const columns = ['Backlog', 'Todo', 'In Progress', 'Done'];
+    columns.forEach(col => {
+      const listEl = document.getElementById(`list-${col}`);
+      if (listEl) {
+        listEl.innerHTML = Array.from({ length: 2 }).map(() => `
+          <div class="task-card" style="opacity: 0.4; animation: pulse 1.5s infinite; min-height: 110px;">
+            <div style="height: 14px; width: 70%; background: var(--border-color); border-radius: 4px; margin-bottom: 8px;"></div>
+            <div style="height: 10px; width: 90%; background: var(--border-color); border-radius: 4px; margin-bottom: 6px;"></div>
+            <div style="height: 10px; width: 50%; background: var(--border-color); border-radius: 4px;"></div>
+          </div>
+        `).join('');
+      }
+    });
+  }
 };
 
 export const createTaskCardElement = (task, allTasks) => {
@@ -330,14 +358,33 @@ export const renderActivityLog = (activities) => {
   if (!container) return;
 
   if (activities.length === 0) {
-    container.innerHTML = `<div style="font-size: 12px; color: var(--text-dim);">No recent activity logged.</div>`;
+    container.innerHTML = `
+      <div style="font-size: 12px; color: var(--text-dim); text-align: center; padding: 16px;">
+        No recent activity logged. Task status changes and dependency unlocks will appear here.
+      </div>
+    `;
     return;
   }
 
-  container.innerHTML = activities.map(act => `
-    <div class="activity-item">
-      <span>${escapeHtml(act.text)}</span>
-      <span class="activity-time">${act.timestamp}</span>
-    </div>
-  `).join('');
+  container.innerHTML = activities.map(act => {
+    let icon = 'ℹ️';
+    let iconColor = 'var(--text-muted)';
+    if (act.type === 'move') { icon = '➔'; iconColor = 'var(--status-in-progress)'; }
+    else if (act.type === 'unlock') { icon = '⚡'; iconColor = 'var(--status-done)'; }
+    else if (act.type === 'blocked') { icon = '🔒'; iconColor = 'var(--status-locked)'; }
+    else if (act.type === 'add') { icon = '➕'; iconColor = 'var(--status-todo)'; }
+    else if (act.type === 'edit') { icon = '✏️'; iconColor = 'var(--accent-primary)'; }
+    else if (act.type === 'delete') { icon = '🗑️'; iconColor = 'var(--status-locked)'; }
+    else if (act.type === 'system') { icon = '⚙️'; iconColor = 'var(--status-backlog)'; }
+
+    return `
+      <div class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+          <span style="color: ${iconColor}; font-size: 13px; flex-shrink: 0;">${icon}</span>
+          <span style="font-size: 12px; color: var(--text-main); word-break: break-word;">${escapeHtml(act.text)}</span>
+        </div>
+        <span class="activity-time" style="font-size: 10px; color: var(--text-dim); font-family: monospace; flex-shrink: 0;">${escapeHtml(act.timestamp || '')}</span>
+      </div>
+    `;
+  }).join('');
 };

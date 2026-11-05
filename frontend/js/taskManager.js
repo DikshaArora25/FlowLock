@@ -6,6 +6,7 @@ import {
   resetDemoTasksAPI,
   importTasksAPI,
   getActivityAPI,
+  getActivityStatsAPI,
   logActivityAPI,
   clearActivityAPI
 } from './api.js';
@@ -247,10 +248,41 @@ class TaskManager {
     const done = this.tasks.filter(t => t.status === 'Done').length;
     const locked = this.tasks.filter(t => t.locked).length;
     const withDeps = this.tasks.filter(t => (t.dependsOn || []).length > 0).length;
+    const highPriority = this.tasks.filter(t => t.priority === 'High').length;
     const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
     const unblockedHealth = total > 0 ? Math.round(((total - locked) / total) * 100) : 100;
 
-    return { total, backlog, todo, inProgress, done, locked, withDeps, completionRate, unblockedHealth };
+    return { total, backlog, todo, inProgress, done, locked, withDeps, highPriority, completionRate, unblockedHealth };
+  }
+
+  async fetchActivities(options = {}) {
+    try {
+      const res = await getActivityAPI(options);
+      const items = res.activities || res.data || [];
+      if (!options.type && !options.search) {
+        this.activities = items;
+      }
+      return {
+        success: true,
+        activities: items,
+        total: res.total ?? items.length,
+        page: res.page ?? 1,
+        totalPages: res.totalPages ?? 1
+      };
+    } catch (err) {
+      console.warn('[Activity] Could not fetch activities:', err.message);
+      return { success: false, message: err.message, activities: [] };
+    }
+  }
+
+  async getActivityStats() {
+    try {
+      const res = await getActivityStatsAPI();
+      return res.data || null;
+    } catch (err) {
+      console.warn('[Activity] Could not fetch activity stats:', err.message);
+      return null;
+    }
   }
 
   async logActivity(text, type = 'info') {
