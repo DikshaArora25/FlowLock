@@ -17,12 +17,17 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       index: true,
+      maxlength: [254, 'Email address cannot exceed 254 characters'],
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address']
     },
     password: {
       type: String,
       required: [true, 'Password is required'],
       minlength: [8, 'Password must be at least 8 characters long'],
+      validate: {
+        validator: value => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 72,
+        message: 'Password cannot exceed 72 UTF-8 bytes'
+      },
       select: false // Never returned in normal queries
     },
     role: {
@@ -57,7 +62,7 @@ userSchema.pre('save', async function () {
 
 // Instance method to compare candidate password against hashed password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  if (!this.password || !candidatePassword) {
+  if (typeof candidatePassword !== 'string' || typeof this.password !== 'string') {
     return false;
   }
   return bcrypt.compare(candidatePassword, this.password);

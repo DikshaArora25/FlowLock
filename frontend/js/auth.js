@@ -1,13 +1,4 @@
-/**
- * FlowLock Authoritative Client Authentication Module
- * -------------------------------------------------------------
- * Connected to Express & MongoDB Atlas backend.
- * All authentication, session generation, profile updates, and password
- * modifications are performed exclusively via backend API endpoints.
- * -------------------------------------------------------------
- */
-
-import {
+﻿import {
   saveSessionUser,
   getSessionUser,
   clearSessionUser
@@ -21,15 +12,21 @@ import {
   changePasswordAPI
 } from './api.js';
 
-export const DEMO_USER = {
-  email: 'demo@flowlock.app',
-  password: 'flowlock123',
-  name: 'Diksha',
-  role: 'Lead Engineer'
-};
-
 const PROTECTED_PAGES = ['dashboard', 'tasks', 'activity', 'profile'];
 const GUEST_PAGES = ['login', 'signup', 'index'];
+
+const getTokenExpiry = (token) => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')));
+    return Number.isFinite(decoded.exp) ? new Date(decoded.exp * 1000).toISOString() : null;
+  } catch (error) {
+    return null;
+  }
+};
 
 export const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
@@ -63,8 +60,9 @@ export const calculatePasswordStrength = (password) => {
   };
 
   const metCount = Object.values(criteria).filter(Boolean).length;
+  const percent = (metCount / 5) * 100;
+
   let label = 'Weak';
-  let percent = (metCount / 5) * 100;
   let color = '#ef4444';
 
   if (metCount <= 2) {
@@ -84,9 +82,6 @@ export const calculatePasswordStrength = (password) => {
   return { score: metCount, label, percent, color, criteria };
 };
 
-/**
- * Register a new user account with Express & MongoDB backend
- */
 export const signupUser = async ({
   name,
   email,
@@ -98,20 +93,15 @@ export const signupUser = async ({
   const cleanEmail = email ? email.trim().toLowerCase() : '';
   const cleanRole = role ? role.trim() : 'Software Engineer';
 
-  console.log('[Auth] Initiating user registration for:', cleanEmail);
-
   if (!cleanName || cleanName.length < 2) {
-    console.warn('[Auth] Registration validation error: Name too short.');
     return { success: false, message: 'Please enter your full name (at least 2 characters).' };
   }
 
   if (!isValidEmail(cleanEmail)) {
-    console.warn('[Auth] Registration validation error: Invalid email format.');
     return { success: false, message: 'Please enter a valid email address.' };
   }
 
   if (!isValidPassword(password)) {
-    console.warn('[Auth] Registration validation error: Weak password.');
     return {
       success: false,
       message: 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.'
@@ -119,12 +109,10 @@ export const signupUser = async ({
   }
 
   if (password !== confirmPassword) {
-    console.warn('[Auth] Registration validation error: Passwords do not match.');
     return { success: false, message: 'Passwords do not match.' };
   }
 
   try {
-    console.log('[Auth] Dispatching POST /api/auth/signup to backend...');
     const res = await signupAPI({
       name: cleanName,
       email: cleanEmail,
@@ -132,10 +120,7 @@ export const signupUser = async ({
       role: cleanRole
     });
 
-    const now = Date.now();
-    const durationMs = 30 * 24 * 60 * 60 * 1000;
-    const expiresAt = new Date(now + durationMs).toISOString();
-
+    const expiresAt = getTokenExpiry(res.token) || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const userSession = {
       id: res.user.id || res.user._id,
       email: res.user.email,
@@ -150,15 +135,8 @@ export const signupUser = async ({
     };
 
     saveSessionUser(userSession, true);
-    console.log('[Auth] User successfully registered and session initialized via MongoDB Atlas:', userSession.email);
-
-    return {
-      success: true,
-      user: userSession,
-      token: res.token
-    };
+    return { success: true, user: userSession, token: res.token };
   } catch (error) {
-    console.error('[Auth] Backend registration failed:', error.message);
     return {
       success: false,
       message: error.message || 'Registration failed. Please try again.'
@@ -166,39 +144,27 @@ export const signupUser = async ({
   }
 };
 
-/**
- * Authenticate user credentials with Express & MongoDB backend
- * Strictly enforces backend verification with bcrypt and JWT (No mock bypass / no offline fallback)
- */
 export const loginUser = async (email, password, rememberMe = false) => {
   const cleanEmail = email ? email.trim().toLowerCase() : '';
-  const cleanPassword = password ? password.trim() : '';
-
-  console.log('[Auth] Initiating login verification for:', cleanEmail);
+  const cleanPassword = typeof password === 'string' ? password : '';
 
   if (!isValidEmail(cleanEmail)) {
-    console.warn('[Auth] Login validation error: Invalid email format.');
     return { success: false, message: 'Please enter a valid email address.' };
   }
 
   if (!cleanPassword) {
-    console.warn('[Auth] Login validation error: Password missing.');
     return { success: false, message: 'Please enter your password.' };
   }
 
-  const now = Date.now();
-  const durationMs = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-  const expiresAt = new Date(now + durationMs).toISOString();
-
   try {
-    console.log('[Auth] Dispatching POST /api/auth/login to backend...');
     const res = await loginAPI({
       email: cleanEmail,
       password: cleanPassword
     });
 
+    const expiresAt = getTokenExpiry(res.token) || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const userSession = {
-      id: res.user.id,
+      id: res.user.id || res.user._id,
       email: res.user.email,
       name: res.user.name,
       role: res.user.role || 'Software Engineer',
@@ -211,69 +177,52 @@ export const loginUser = async (email, password, rememberMe = false) => {
     };
 
     saveSessionUser(userSession, rememberMe);
-    console.log('[Auth] Backend login successful. JWT verified for user:', userSession.email);
-
     return { success: true, user: userSession };
-  } catch (backendError) {
-    console.error('[Auth] Backend authentication rejected:', backendError.message);
+  } catch (error) {
     return {
       success: false,
-      message: backendError.message || 'Invalid email or password.'
+      message: error.message || 'Invalid email or password.'
     };
   }
 };
 
-/**
- * Update authenticated user profile via backend API (PUT /api/auth/profile)
- */
 export const updateUserProfile = async ({ name, role }) => {
   const current = getSessionUser();
   if (!current || !current.token) {
-    console.warn('[Auth] Cannot update profile: No active authenticated session.');
     return { success: false, message: 'No active session.' };
   }
 
-  const cleanName = name ? name.trim() : current.name;
-  const cleanRole = role ? role.trim() : (current.role || 'Software Engineer');
-
-  if (cleanName.length < 2) {
-    return { success: false, message: 'Full name must be at least 2 characters.' };
+  if ((name !== undefined && typeof name !== 'string') || (role !== undefined && typeof role !== 'string')) {
+    return { success: false, message: 'Name and role must be text values.' };
   }
 
-  console.log('[Auth] Dispatching profile update to backend for:', current.email);
+  const cleanName = typeof name === 'string' ? name.trim() : current.name;
+  const cleanRole = typeof role === 'string' && role.trim() ? role.trim() : (current.role || 'Software Engineer');
+
+  if (typeof cleanName !== 'string' || cleanName.length < 2 || cleanName.length > 80) {
+    return { success: false, message: 'Full name must be between 2 and 80 characters.' };
+  }
+
+  if (typeof cleanRole !== 'string' || cleanRole.length > 60) {
+    return { success: false, message: 'Role cannot exceed 60 characters.' };
+  }
 
   try {
-    const res = await updateProfileAPI(
-      { name: cleanName, role: cleanRole },
-      current.token
-    );
-
-    const updatedSession = {
-      ...current,
-      name: res.user.name || cleanName,
-      role: res.user.role || cleanRole
-    };
-
+    const response = await updateProfileAPI(current.token, { name: cleanName, role: cleanRole });
+    const updatedSession = { ...current, ...response.user };
     saveSessionUser(updatedSession, current.rememberMe);
-    console.log('[Auth] Profile successfully updated on MongoDB Atlas for:', updatedSession.email);
-
     return { success: true, user: updatedSession };
   } catch (error) {
-    console.error('[Auth] Error updating profile on backend:', error.message);
     return {
       success: false,
-      message: error.message || 'Failed to update profile on server.'
+      message: error.message || 'Unable to update your profile. Please try again.'
     };
   }
 };
 
-/**
- * Change authenticated user password via backend API (PUT /api/auth/password)
- */
 export const changeUserPassword = async ({ currentPassword, newPassword, confirmNewPassword }) => {
   const current = getSessionUser();
   if (!current || !current.token) {
-    console.warn('[Auth] Cannot change password: No active authenticated session.');
     return { success: false, message: 'No active session.' };
   }
 
@@ -288,21 +237,13 @@ export const changeUserPassword = async ({ currentPassword, newPassword, confirm
     };
   }
 
-  console.log('[Auth] Dispatching password change request to backend for:', current.email);
-
   try {
-    const res = await changePasswordAPI(
-      { currentPassword, newPassword },
-      current.token
-    );
-
-    console.log('[Auth] Password successfully updated on MongoDB Atlas for:', current.email);
+    const response = await changePasswordAPI(current.token, { currentPassword, newPassword });
     return {
       success: true,
-      message: res.message || 'Password updated successfully!'
+      message: response.message || 'Password updated successfully!'
     };
   } catch (error) {
-    console.error('[Auth] Backend password update rejected:', error.message);
     return {
       success: false,
       message: error.message || 'Failed to update password.'
@@ -310,29 +251,16 @@ export const changeUserPassword = async ({ currentPassword, newPassword, confirm
   }
 };
 
-/**
- * Check and enforce route protection across guest and authenticated pages
- */
 export const checkAuthGuard = (currentPage) => {
   const session = getSessionUser();
   const isAuthenticated = Boolean(session && session.token);
 
-  console.log(
-    `[AuthGuard] Checking route '${currentPage}'. Status: ${
-      isAuthenticated ? `Authenticated (${session.email})` : 'Unauthenticated'
-    }`
-  );
-
-  // Protected pages -> redirect to login if no active session
   if (PROTECTED_PAGES.includes(currentPage) && !isAuthenticated) {
-    console.warn(`[AuthGuard] Access denied to protected page '${currentPage}'. Redirecting to login.html.`);
     window.location.href = 'login.html';
     return null;
   }
 
-  // Guest-only pages -> redirect to dashboard if already authenticated
   if (GUEST_PAGES.includes(currentPage) && isAuthenticated) {
-    console.log(`[AuthGuard] Already authenticated on guest page '${currentPage}'. Redirecting to dashboard.html.`);
     window.location.href = 'dashboard.html';
     return session;
   }
@@ -340,9 +268,6 @@ export const checkAuthGuard = (currentPage) => {
   return session;
 };
 
-/**
- * Verify session token against backend (GET /api/auth/me)
- */
 export const verifySessionWithBackend = async () => {
   const session = getSessionUser();
   if (!session || !session.token) {
@@ -350,23 +275,15 @@ export const verifySessionWithBackend = async () => {
   }
 
   try {
-    console.log('[Auth] Verifying session token with backend (GET /api/auth/me)...');
     const res = await getMeAPI(session.token);
-    console.log('[Auth] Session token successfully verified with MongoDB Atlas:', res.user.email);
     return { authenticated: true, user: res.user };
   } catch (error) {
-    console.warn('[Auth] Session verification failed on backend:', error.message);
     clearSessionUser();
     return { authenticated: false, message: error.message };
   }
 };
 
-/**
- * Log out user and redirect to login page
- */
 export const logoutUser = () => {
-  const session = getSessionUser();
-  console.log('[Auth] Terminating session and logging out user:', session?.email || 'Unknown');
   clearSessionUser();
   window.location.href = 'login.html';
 };

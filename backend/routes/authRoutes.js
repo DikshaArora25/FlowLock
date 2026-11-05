@@ -11,6 +11,8 @@ router.post('/login', login);
 // Protected user session endpoints (Requires valid JWT)
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
+router.patch('/profile', protect, updateProfile);
 router.put('/password', protect, changePassword);
+router.patch('/password', protect, changePassword);
 
 export default router;

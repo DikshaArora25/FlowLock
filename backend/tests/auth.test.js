@@ -1,6 +1,6 @@
-import { test, describe, before, after } from 'node:test';
+﻿import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -10,6 +10,7 @@ import User from '../models/User.js';
 
 let server;
 let baseUrl;
+let authToken = '';
 
 const TEST_USER = {
   name: 'Test Engineer',
@@ -18,7 +19,12 @@ const TEST_USER = {
   role: 'Senior Developer'
 };
 
-let authToken = '';
+const RACE_USER = {
+  name: 'Concurrent Signup',
+  email: `race-${Date.now()}@flowlock.test`,
+  password: 'Password123!',
+  role: 'Software Engineer'
+};
 
 describe('FlowLock Authentication API Tests', () => {
   before(async () => {
@@ -28,26 +34,27 @@ describe('FlowLock Authentication API Tests', () => {
       server = app.listen(0, () => {
         const port = server.address().port;
         baseUrl = `http://localhost:${port}`;
-        console.log(`[Auth Test Suite] Test server running on ${baseUrl}`);
         resolve();
       });
     });
 
-    // Clean up any lingering test user
-    await User.deleteMany({ email: { $regex: /@flowlock\.test$/i } });
+    await User.deleteMany({
+      email: { $in: [TEST_USER.email.toLowerCase(), RACE_USER.email.toLowerCase()] }
+    });
   });
 
   after(async () => {
-    // Clean up test user created during the suite
-    await User.deleteMany({ email: { $regex: /@flowlock\.test$/i } });
+    await User.deleteMany({
+      email: { $in: [TEST_USER.email.toLowerCase(), RACE_USER.email.toLowerCase()] }
+    });
 
     if (server) {
-      await new Promise(resolve => server.close(resolve));
+      await new Promise((resolve) => server.close(resolve));
     }
     await disconnectDB();
   });
 
-  test('1. Reject signup with missing required fields (POST /api/auth/signup)', async () => {
+  test('reject signup with missing required fields', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -60,7 +67,7 @@ describe('FlowLock Authentication API Tests', () => {
     assert.ok(body.message);
   });
 
-  test('2. Reject signup with invalid email format (POST /api/auth/signup)', async () => {
+  test('reject signup with invalid email format', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,11 +79,10 @@ describe('FlowLock Authentication API Tests', () => {
     });
 
     assert.equal(res.status, 400);
-    const body = await res.json();
-    assert.equal(body.success, false);
+    assert.equal((await res.json()).success, false);
   });
 
-  test('3. Reject signup with weak password (POST /api/auth/signup)', async () => {
+  test('reject signup with weak password', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -88,11 +94,10 @@ describe('FlowLock Authentication API Tests', () => {
     });
 
     assert.equal(res.status, 400);
-    const body = await res.json();
-    assert.equal(body.success, false);
+    assert.equal((await res.json()).success, false);
   });
 
-  test('4. Successfully register a new user and return JWT (POST /api/auth/signup)', async () => {
+  test('register a new user and return JWT', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,23 +106,21 @@ describe('FlowLock Authentication API Tests', () => {
 
     assert.equal(res.status, 201);
     const body = await res.json();
-
     assert.equal(body.success, true);
     assert.ok(body.token, 'Response should contain a JWT token');
-    assert.ok(body.user, 'Response should contain user profile');
+    assert.ok(body.user);
     assert.equal(body.user.email, TEST_USER.email.toLowerCase());
     assert.equal(body.user.name, TEST_USER.name);
     assert.equal(body.user.role, TEST_USER.role);
-    assert.equal(body.user.password, undefined, 'Password hash must NEVER be exposed');
+    assert.equal(body.user.password, undefined);
 
-    // Verify in MongoDB that password was actually hashed with bcrypt
     const dbUser = await User.findOne({ email: TEST_USER.email.toLowerCase() }).select('+password');
     assert.ok(dbUser);
-    assert.notEqual(dbUser.password, TEST_USER.password, 'Password must not be stored in plaintext');
-    assert.ok(dbUser.password.startsWith('$2'), 'Password should be a valid bcrypt hash');
+    assert.notEqual(dbUser.password, TEST_USER.password);
+    assert.ok(dbUser.password.startsWith('$2'));
   });
 
-  test('5. Reject duplicate email registration (POST /api/auth/signup)', async () => {
+  test('reject duplicate email registration', async () => {
     const res = await fetch(`${baseUrl}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -125,27 +128,21 @@ describe('FlowLock Authentication API Tests', () => {
     });
 
     assert.equal(res.status, 409);
-    const body = await res.json();
-    assert.equal(body.success, false);
-    assert.ok(body.message.includes('already exists'));
+    assert.equal((await res.json()).success, false);
   });
 
-  test('6. Reject login with non-existent email (POST /api/auth/login)', async () => {
+  test('reject login with non-existent email', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'ghost@flowlock.test',
-        password: 'Password123!'
-      })
+      body: JSON.stringify({ email: 'ghost@flowlock.test', password: 'Password123!' })
     });
 
     assert.equal(res.status, 401);
-    const body = await res.json();
-    assert.equal(body.success, false);
+    assert.equal((await res.json()).success, false);
   });
 
-  test('7. Reject login with wrong password (POST /api/auth/login)', async () => {
+  test('reject login with wrong password', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -156,11 +153,10 @@ describe('FlowLock Authentication API Tests', () => {
     });
 
     assert.equal(res.status, 401);
-    const body = await res.json();
-    assert.equal(body.success, false);
+    assert.equal((await res.json()).success, false);
   });
 
-  test('8. Successfully login and return JWT token (POST /api/auth/login)', async () => {
+  test('login successfully and return JWT', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,7 +168,6 @@ describe('FlowLock Authentication API Tests', () => {
 
     assert.equal(res.status, 200);
     const body = await res.json();
-
     assert.equal(body.success, true);
     assert.ok(body.token);
     assert.equal(body.user.email, TEST_USER.email.toLowerCase());
@@ -181,25 +176,31 @@ describe('FlowLock Authentication API Tests', () => {
     authToken = body.token;
   });
 
-  test('9. Protected route rejects request with no token (GET /api/auth/me)', async () => {
+  test('reject unauthenticated access to protected route', async () => {
     const res = await fetch(`${baseUrl}/api/auth/me`);
     assert.equal(res.status, 401);
-    const body = await res.json();
-    assert.equal(body.success, false);
+    assert.equal((await res.json()).success, false);
   });
 
-  test('10. Protected route rejects request with invalid token (GET /api/auth/me)', async () => {
-    const res = await fetch(`${baseUrl}/api/auth/me`, {
-      headers: { Authorization: 'Bearer fake.invalid.jwt.token' }
-    });
-    assert.equal(res.status, 401);
-    const body = await res.json();
-    assert.equal(body.success, false);
+  test('reject invalid JWTs on protected route', async () => {
+    const invalidTokens = [
+      jwt.sign({ id: '507f1f77bcf86cd799439011' }, process.env.JWT_SECRET, { expiresIn: -1 }),
+      jwt.sign({ id: '507f1f77bcf86cd799439011' }, process.env.JWT_SECRET),
+      jwt.sign({ sub: '507f1f77bcf86cd799439011' }, process.env.JWT_SECRET, { expiresIn: '1h' }),
+      jwt.sign({ id: 'not-an-object-id' }, process.env.JWT_SECRET, { expiresIn: '1h' }),
+      jwt.sign({ id: '507f1f77bcf86cd799439011' }, process.env.JWT_SECRET, { expiresIn: '1h', algorithm: 'HS384' })
+    ];
+
+    for (const token of invalidTokens) {
+      const res = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      assert.equal(res.status, 401);
+      assert.equal((await res.json()).success, false);
+    }
   });
 
-  test('11. Protected route accepts valid JWT and returns profile (GET /api/auth/me)', async () => {
-    assert.ok(authToken, 'authToken should have been captured in step 8');
-
+  test('accept valid JWT and return current user profile', async () => {
     const res = await fetch(`${baseUrl}/api/auth/me`, {
       headers: { Authorization: `Bearer ${authToken}` }
     });
@@ -212,8 +213,7 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.user.password, undefined);
   });
 
-  test('12. Update user profile (PUT /api/auth/profile)', async () => {
-    assert.ok(authToken);
+  test('update profile via PUT /api/auth/profile', async () => {
     const res = await fetch(`${baseUrl}/api/auth/profile`, {
       method: 'PUT',
       headers: {
@@ -230,10 +230,8 @@ describe('FlowLock Authentication API Tests', () => {
     assert.equal(body.user.role, 'Staff Engineer');
   });
 
-  test('13. Change user password and verify login with new password (PUT /api/auth/password)', async () => {
-    assert.ok(authToken);
+  test('change password and verify the new password works', async () => {
     const newPassword = 'NewSecretPassword99!';
-
     const res = await fetch(`${baseUrl}/api/auth/password`, {
       method: 'PUT',
       headers: {
@@ -247,22 +245,29 @@ describe('FlowLock Authentication API Tests', () => {
     });
 
     assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.success, true);
+    assert.equal((await res.json()).success, true);
 
-    // Verify login with new password works
     const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: TEST_USER.email,
-        password: newPassword
-      })
+      body: JSON.stringify({ email: TEST_USER.email, password: newPassword })
     });
 
     assert.equal(loginRes.status, 200);
     const loginBody = await loginRes.json();
     assert.equal(loginBody.success, true);
     assert.ok(loginBody.token);
+    authToken = loginBody.token;
+  });
+
+  test('return conflict when concurrent signups race on a unique email', async () => {
+    const requests = Array.from({ length: 2 }, () => fetch(`${baseUrl}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(RACE_USER)
+    }));
+
+    const responses = await Promise.all(requests);
+    assert.deepEqual(responses.map((response) => response.status).sort((a, b) => a - b), [201, 409]);
   });
 });

@@ -69,16 +69,6 @@
           <p class="auth-form-subtitle">Sign in to access your dependency workspace</p>
         </div>
 
-        <div class="demo-credentials-banner">
-          <div class="demo-credentials-info">
-            <span class="demo-badge">⚡ QUICK DEMO ACCESS</span>
-            <p>Click below to sign in instantly with full workspace access.</p>
-          </div>
-          <button id="quickDemoBtn" type="button" class="btn btn-secondary btn-demo-quick">
-            🔑 Continue with Demo Account
-          </button>
-        </div>
-
         <form id="loginForm" class="auth-form-main">
           
           <div class="form-group">
@@ -113,11 +103,11 @@
           <div class="form-options">
             <label class="form-checkbox-label">
               <input type="checkbox" id="rememberMe" checked>
-              <span>Remember me for 30 days</span>
+              <span>Keep me signed in on this device</span>
             </label>
           </div>
 
-          <div id="loginError" class="form-error-banner" style="display: none;"></div>
+          <div id="loginError" class="form-error-banner" aria-live="polite" style="display: none;"></div>
 
           <button type="submit" class="btn btn-primary auth-submit-btn">
             Sign In to Workspace ➔
@@ -148,10 +138,10 @@
 
       const form = document.getElementById('loginForm');
       const errorEl = document.getElementById('loginError');
-      const quickDemoBtn = document.getElementById('quickDemoBtn');
       const emailInput = document.getElementById('loginEmail');
       const passwordInput = document.getElementById('loginPassword');
       const togglePwBtn = document.getElementById('toggleLoginPw');
+      const submitBtn = form.querySelector('button[type="submit"]');
 
       // Check query parameters
       const urlParams = new URLSearchParams(window.location.search);
@@ -178,16 +168,22 @@
         errorEl.style.display = 'none';
         errorEl.textContent = '';
 
-        const result = await loginUser(email, password, remember);
-        if (result.success) {
-          showToast(`Welcome back, ${result.user.name}!`, 'success');
-          setTimeout(() => {
-            window.location.href = 'dashboard.html';
-          }, 300);
-        } else {
-          errorEl.textContent = result.message || 'Unable to sign in. Please try again.';
-          errorEl.style.display = 'block';
-          errorEl.classList.add('active');
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+          const result = await loginUser(email, password, remember);
+          if (result.success) {
+            showToast(`Welcome back, ${result.user.name}!`, 'success');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 300);
+          } else {
+            errorEl.textContent = result.message || 'Unable to sign in. Please try again.';
+            errorEl.style.display = 'block';
+            errorEl.classList.add('active');
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
         }
       }
 
@@ -198,12 +194,6 @@
         const remember = document.getElementById('rememberMe').checked;
         await handleLoginSubmit(email, password, remember);
       });
-
-      if (quickDemoBtn) {
-        quickDemoBtn.addEventListener('click', async () => {
-          await handleLoginSubmit('demo@flowlock.app', 'flowlock123', true);
-        });
-      }
     });
   </script>
 </body>

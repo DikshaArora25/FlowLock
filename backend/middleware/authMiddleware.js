@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
@@ -8,12 +9,11 @@ import User from '../models/User.js';
  */
 export const protect = async (req, res, next) => {
   try {
-    let token = null;
-
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    }
+    const bearerMatch = typeof authHeader === 'string'
+      ? authHeader.match(/^Bearer\s+(\S+)$/i)
+      : null;
+    const token = bearerMatch?.[1];
 
     if (!token) {
       return res.status(401).json({
@@ -29,7 +29,7 @@ export const protect = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, secret);
+      decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
     } catch (jwtError) {
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({
@@ -37,6 +37,19 @@ export const protect = async (req, res, next) => {
           message: 'Authentication token has expired. Please sign in again.'
         });
       }
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authentication token.'
+      });
+    }
+
+    if (
+      typeof decoded !== 'object' ||
+      decoded === null ||
+      typeof decoded.id !== 'string' ||
+      !mongoose.isValidObjectId(decoded.id) ||
+      typeof decoded.exp !== 'number'
+    ) {
       return res.status(401).json({
         success: false,
         message: 'Invalid authentication token.'
